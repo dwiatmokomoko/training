@@ -14,12 +14,9 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // Seed Positions
+        // 1. Seed Positions
         $positions = [
             ['name' => 'Hakim', 'description' => 'Hakim Pengadilan Negeri', 'level' => 'hakim'],
             ['name' => 'Panitera', 'description' => 'Panitera Pengadilan', 'level' => 'pegawai'],
@@ -32,7 +29,7 @@ class DatabaseSeeder extends Seeder
             Position::create($position);
         }
 
-        // Seed Criteria
+        // 2. Seed Criteria
         $criteria = [
             ['name' => 'Kompetensi Teknis', 'description' => 'Kemampuan teknis dalam bidang kerja', 'weight' => 0.30, 'type' => 'benefit'],
             ['name' => 'Kinerja', 'description' => 'Penilaian kinerja pegawai', 'weight' => 0.25, 'type' => 'benefit'],
@@ -45,8 +42,8 @@ class DatabaseSeeder extends Seeder
             Criteria::create($criterion);
         }
 
-        // Seed Sample Employees
-        $employees = [
+        // 3. Seed Sample Employees
+        $employeesData = [
             [
                 'nip' => '196801011990031001',
                 'name' => 'Dr. Ahmad Santoso, S.H., M.H.',
@@ -104,27 +101,24 @@ class DatabaseSeeder extends Seeder
             ]
         ];
 
-        foreach ($employees as $employee) {
-            Employee::create($employee);
+        foreach ($employeesData as $emp) {
+            Employee::create($emp);
         }
 
-        // Seed Sample Assessments
+        // 4. Seed Sample Assessments (DISESUAIKAN DENGAN STRUKTUR BARU)
         $employees = Employee::all();
-        $criteria = Criteria::all();
 
         foreach ($employees as $employee) {
-            foreach ($criteria as $criterion) {
-                Assessment::create([
-                    'employee_id' => $employee->id,
-                    'criteria_id' => $criterion->id,
-                    'score' => rand(60, 95), // Random score between 60-95
-                    'assessment_date' => now()->subDays(rand(1, 30)),
-                    'notes' => 'Assessment untuk ' . $employee->name . ' pada kriteria ' . $criterion->name
-                ]);
-            }
+            Assessment::create([
+                'employee_id'     => $employee->id,
+                // criteria_id dan score dihapus karena sudah di-drop di migrasi
+                'total_score'     => rand(60, 95) / 100, // Menyesuaikan decimal(5,4)
+                'assessment_date' => now()->subDays(rand(1, 30)),
+                'notes'           => 'Assessment total untuk ' . $employee->name
+            ]);
         }
 
-        // Create admin user
+        // 5. Create admin user
         User::factory()->create([
             'name' => 'Admin TNA',
             'email' => 'admin@pn-sleman.go.id',
