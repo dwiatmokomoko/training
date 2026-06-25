@@ -103,15 +103,15 @@
                     Detail Perhitungan SAW
                 </h6>
                 
-                @if($trainingNeed->employee->assessments->count() > 0)
-                @php
-                    $latestAssessment = $trainingNeed->employee->assessments->sortByDesc('created_at')->first();
-                @endphp
+                @if(count($sawBreakdown) > 0)
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-dark">
                             <tr>
+                                <th>Kode</th>
                                 <th>Kriteria</th>
+                                <th>Atribut</th>
+                                <th>Sumber Data</th>
                                 <th>Bobot</th>
                                 <th>Nilai</th>
                                 <th>Normalisasi</th>
@@ -122,24 +122,26 @@
                             @php
                                 $totalWeightedScore = 0;
                             @endphp
-                            @foreach($latestAssessment->scores as $score)
+                            @foreach($sawBreakdown as $item)
                             @php
-                                $normalizedScore = $score->score / 5; // Normalisasi ke skala 0-1
-                                $weightedScore = $normalizedScore * $score->criteria->weight;
-                                $totalWeightedScore += $weightedScore;
+                                $criterion = $item['criteria'];
+                                $totalWeightedScore += $item['weighted_score'];
                             @endphp
                             <tr>
-                                <td>{{ $score->criteria->name }}</td>
-                                <td>{{ number_format($score->criteria->weight * 100, 1) }}%</td>
-                                <td>{{ $score->score }}/5</td>
-                                <td>{{ number_format($normalizedScore, 3) }}</td>
-                                <td>{{ number_format($weightedScore, 4) }}</td>
+                                <td>{{ $criterion->code }}</td>
+                                <td>{{ $criterion->name }}</td>
+                                <td>{{ ucfirst($criterion->type) }}</td>
+                                <td>{{ $item['source'] }}</td>
+                                <td>{{ number_format($criterion->weight * 100, 1) }}%</td>
+                                <td>{{ $item['raw_score'] }}/5</td>
+                                <td>{{ number_format($item['normalized_score'], 3) }}</td>
+                                <td>{{ number_format($item['weighted_score'], 4) }}</td>
                             </tr>
                             @endforeach
                         </tbody>
                         <tfoot class="table-secondary">
                             <tr>
-                                <th colspan="4">Total Skor SAW</th>
+                                <th colspan="7">Total Skor SAW</th>
                                 <th>{{ number_format($totalWeightedScore, 4) }}</th>
                             </tr>
                         </tfoot>

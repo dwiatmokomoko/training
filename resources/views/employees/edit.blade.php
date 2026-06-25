@@ -62,7 +62,7 @@
                                     @foreach($positions as $position)
                                         <option value="{{ $position->id }}" 
                                                 {{ old('position_id', $employee->position_id) == $position->id ? 'selected' : '' }}>
-                                            {{ $position->name }}
+                                            {{ $position->name }}{{ $position->jobFamily ? ' - ' . $position->jobFamily->name : '' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -73,6 +73,38 @@
                         </div>
                     </div>
                     
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="work_unit_id" class="form-label">Unit Kerja</label>
+                                <select class="form-select @error('work_unit_id') is-invalid @enderror"
+                                        id="work_unit_id" name="work_unit_id">
+                                    <option value="">Pilih Unit Kerja</option>
+                                    @foreach($workUnits as $unit)
+                                        <option value="{{ $unit->id }}"
+                                                {{ old('work_unit_id', $employee->work_unit_id) == $unit->id ? 'selected' : '' }}>
+                                            {{ $unit->parent ? $unit->parent->name . ' - ' : '' }}{{ $unit->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('work_unit_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="current_position_start_date" class="form-label">TMT Jabatan Saat Ini</label>
+                                <input type="date" class="form-control @error('current_position_start_date') is-invalid @enderror"
+                                       id="current_position_start_date" name="current_position_start_date"
+                                       value="{{ old('current_position_start_date', $employee->current_position_start_date ? $employee->current_position_start_date->format('Y-m-d') : '') }}">
+                                @error('current_position_start_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -118,6 +150,31 @@
                         </div>
                     </div>
                     
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="last_promotion_date" class="form-label">Tanggal Promosi Terakhir</label>
+                                <input type="date" class="form-control @error('last_promotion_date') is-invalid @enderror"
+                                       id="last_promotion_date" name="last_promotion_date"
+                                       value="{{ old('last_promotion_date', $employee->last_promotion_date ? $employee->last_promotion_date->format('Y-m-d') : '') }}">
+                                @error('last_promotion_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="last_training_date" class="form-label">Tanggal Pelatihan Terakhir</label>
+                                <input type="date" class="form-control @error('last_training_date') is-invalid @enderror"
+                                       id="last_training_date" name="last_training_date"
+                                       value="{{ old('last_training_date', $employee->last_training_date ? $employee->last_training_date->format('Y-m-d') : '') }}">
+                                @error('last_training_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('assessments', function (Blueprint $table) {
             // Drop old columns
+            $table->dropUnique(['employee_id', 'criteria_id']);
             $table->dropForeign(['criteria_id']);
             $table->dropColumn(['criteria_id', 'score']);
             
@@ -30,6 +31,7 @@ return new class extends Migration
             // Restore old columns
             $table->foreignId('criteria_id')->constrained()->onDelete('cascade');
             $table->decimal('score', 5, 2);
+            $table->unique(['employee_id', 'criteria_id']);
             
             // Drop new columns
             $table->dropColumn('total_score');

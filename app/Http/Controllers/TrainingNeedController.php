@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\TrainingNeed;
 use App\Models\Employee;
+use App\Services\SAWService;
 
 class TrainingNeedController extends Controller
 {
@@ -19,9 +20,13 @@ class TrainingNeedController extends Controller
 
     public function show(TrainingNeed $trainingNeed)
     {
-        $trainingNeed->load(['employee.position', 'employee.assessments.scores.criteria']);
+        $trainingNeed->load(['employee.position.jobFamily', 'employee.workUnit', 'employee.assessments.scores.criteria']);
+        $latestAssessment = $trainingNeed->employee->assessments->sortByDesc('created_at')->first();
+        $sawBreakdown = $latestAssessment
+            ? app(SAWService::class)->calculateEmployeeBreakdown($trainingNeed->employee, $latestAssessment)
+            : [];
         
-        return view('training-needs.show', compact('trainingNeed'));
+        return view('training-needs.show', compact('trainingNeed', 'sawBreakdown'));
     }
 
     public function update(Request $request, TrainingNeed $trainingNeed)

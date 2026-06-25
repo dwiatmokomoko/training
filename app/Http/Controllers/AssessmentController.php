@@ -21,7 +21,7 @@ class AssessmentController extends Controller
     public function create()
     {
         $employees = Employee::with('position')->get();
-        $criteria = Criteria::all();
+        $criteria = Criteria::latestTna()->get();
         
         return view('assessments.create', compact('employees', 'criteria'));
     }
@@ -45,7 +45,7 @@ class AssessmentController extends Controller
         ]);
 
         $totalScore = 0;
-        $criteria = Criteria::all();
+        $criteria = Criteria::latestTna()->get();
 
         // Create assessment scores for each criteria
         foreach ($request->scores as $criteriaId => $score) {
@@ -77,7 +77,7 @@ class AssessmentController extends Controller
     public function edit(Assessment $assessment)
     {
         $employees = Employee::with('position')->get();
-        $criteria = Criteria::all();
+        $criteria = Criteria::latestTna()->get();
         
         return view('assessments.edit', compact('assessment', 'employees', 'criteria'));
     }
@@ -100,7 +100,7 @@ class AssessmentController extends Controller
         ]);
 
         $totalScore = 0;
-        $criteria = Criteria::all();
+        $criteria = Criteria::latestTna()->get();
 
         // Update assessment scores for each criteria
         foreach ($request->scores as $criteriaId => $score) {
@@ -134,7 +134,7 @@ class AssessmentController extends Controller
     public function bulkCreate()
     {
         $employees = Employee::with('position')->get();
-        $criteria = Criteria::all();
+        $criteria = Criteria::latestTna()->get();
         
         return view('assessments.bulk-create', compact('employees', 'criteria'));
     }
@@ -169,7 +169,7 @@ class AssessmentController extends Controller
         ]);
 
         $totalScore = 0;
-        $criteria = Criteria::all();
+        $criteria = Criteria::latestTna()->get();
 
         // Create assessment scores for each criteria
         foreach ($request->scores as $criteriaId => $score) {

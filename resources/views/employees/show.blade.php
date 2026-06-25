@@ -32,6 +32,11 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">Jabatan</label>
                             <p class="form-control-plaintext">{{ $employee->position->name }}</p>
+                            <small class="text-muted">{{ $employee->position->jobFamily?->name ?? '-' }}</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Unit Kerja</label>
+                            <p class="form-control-plaintext">{{ $employee->workUnit?->name ?? '-' }}</p>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -44,12 +49,25 @@
                             <p class="form-control-plaintext">{{ $employee->education_level }}</p>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Pengalaman Kerja</label>
-                            <p class="form-control-plaintext">{{ $employee->work_experience }} tahun</p>
+                            <label class="form-label fw-bold">Masa Jabatan Saat Ini</label>
+                            <p class="form-control-plaintext">
+                                {{ $employee->current_position_years }} tahun
+                                @if($employee->current_position_start_date)
+                                    <small class="text-muted d-block">TMT {{ $employee->current_position_start_date->format('d F Y') }}</small>
+                                @endif
+                            </p>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Tanggal Bergabung</label>
-                            <p class="form-control-plaintext">{{ $employee->created_at->format('d F Y') }}</p>
+                            <label class="form-label fw-bold">Pelatihan Terakhir</label>
+                            <p class="form-control-plaintext">
+                                {{ $employee->last_training_date ? $employee->last_training_date->format('d F Y') : 'Belum pernah / belum tercatat' }}
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Promosi Terakhir</label>
+                            <p class="form-control-plaintext">
+                                {{ $employee->last_promotion_date ? $employee->last_promotion_date->format('d F Y') : 'Tidak pernah / belum tercatat' }}
+                            </p>
                         </div>
                     </div>
                 </div>

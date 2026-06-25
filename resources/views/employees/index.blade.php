@@ -38,8 +38,9 @@
                         <th>NIP</th>
                         <th>Nama</th>
                         <th>Jabatan</th>
+                        <th>Unit Kerja</th>
                         <th>Pendidikan</th>
-                        <th>Pengalaman</th>
+                        <th>Masa Jabatan</th>
                         <th>Email</th>
                         <th>Aksi</th>
                     </tr>
@@ -63,10 +64,11 @@
                         <td>
                             <span class="badge bg-info">{{ $employee->position->name }}</span>
                             <br>
-                            <small class="text-muted">{{ ucfirst($employee->position->level) }}</small>
+                            <small class="text-muted">{{ $employee->position->jobFamily?->name ?? ucfirst($employee->position->level) }}</small>
                         </td>
+                        <td>{{ $employee->workUnit?->name ?? '-' }}</td>
                         <td>{{ $employee->education_level }}</td>
-                        <td>{{ $employee->work_experience }} tahun</td>
+                        <td>{{ $employee->current_position_years }} tahun</td>
                         <td>{{ $employee->email }}</td>
                         <td>
                             <div class="btn-group" role="group">
@@ -118,7 +120,7 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h4 class="text-info">{{ $employees->where('position.level', 'hakim')->count() }}</h4>
+                <h4 class="text-info">{{ $employees->where('position.jobFamily.code', 'HK')->count() }}</h4>
                 <small class="text-muted">Hakim</small>
             </div>
         </div>
@@ -126,16 +128,16 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h4 class="text-success">{{ $employees->where('position.level', 'pegawai')->count() }}</h4>
-                <small class="text-muted">Pegawai</small>
+                <h4 class="text-success">{{ $employees->where('position.jobFamily.code', 'KP')->count() }}</h4>
+                <small class="text-muted">Kepaniteraan</small>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h4 class="text-warning">{{ number_format($employees->avg('work_experience'), 1) }}</h4>
-                <small class="text-muted">Rata-rata Pengalaman</small>
+                <h4 class="text-warning">{{ $employees->where('position.jobFamily.code', 'KS')->count() }}</h4>
+                <small class="text-muted">Kesekretariatan</small>
             </div>
         </div>
     </div>

@@ -38,7 +38,10 @@ class Dashboard extends Component
             ->get()
             ->toArray();
 
-        $this->criteriaWeights = Criteria::select('name', 'weight')->get()->toArray();
+        $this->criteriaWeights = Criteria::latestTna()
+            ->select('code', 'name', 'weight', 'type', 'importance_rating')
+            ->get()
+            ->toArray();
     }
 
     public function runAnalysis()

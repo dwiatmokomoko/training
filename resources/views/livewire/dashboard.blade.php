@@ -94,7 +94,7 @@
                             <h6 class="intro-title">Analisis Kebutuhan Pelatihan</h6>
                             <p class="intro-description">
                                 Jalankan analisis SAW untuk menentukan prioritas kebutuhan pelatihan berdasarkan 
-                                kriteria yang telah ditetapkan dengan bobot yang optimal.
+                                capaian kinerja, riwayat pelatihan, masa jabatan, promosi, dan usia pegawai.
                             </p>
                         </div>
                         
@@ -226,9 +226,12 @@
                             @foreach($criteriaWeights as $criteria)
                             <div class="criteria-item">
                                 <div class="criteria-info">
-                                    <span class="criteria-name">{{ $criteria['name'] }}</span>
+                                    <span class="criteria-name">{{ $criteria['code'] }} - {{ $criteria['name'] }}</span>
                                     <span class="criteria-weight">{{ number_format($criteria['weight'] * 100, 1) }}%</span>
                                 </div>
+                                <small class="text-muted">
+                                    {{ ucfirst($criteria['type']) }} · Rating {{ $criteria['importance_rating'] ?? '-' }}
+                                </small>
                                 <div class="criteria-bar">
                                     <div class="criteria-fill" style="width: {{ $criteria['weight'] * 100 }}%"></div>
                                 </div>
@@ -332,11 +335,11 @@
                                     Metode SAW digunakan untuk menentukan prioritas kebutuhan pelatihan berdasarkan kriteria terbobot:
                                 </p>
                                 <ul class="info-list">
-                                    <li><span class="list-weight">30%</span> Kompetensi Teknis</li>
-                                    <li><span class="list-weight">25%</span> Kinerja Pegawai</li>
-                                    <li><span class="list-weight">20%</span> Pengalaman Kerja</li>
-                                    <li><span class="list-weight">15%</span> Tingkat Pendidikan</li>
-                                    <li><span class="list-weight">10%</span> Usia</li>
+                                    <li><span class="list-weight">33,3%</span> C1 Capaian Kinerja Berbasis Kompetensi</li>
+                                    <li><span class="list-weight">26,7%</span> C2 Riwayat Pelatihan</li>
+                                    <li><span class="list-weight">20,0%</span> C3 Masa Jabatan Saat Ini</li>
+                                    <li><span class="list-weight">13,3%</span> C4 Riwayat Promosi</li>
+                                    <li><span class="list-weight">6,7%</span> C5 Usia</li>
                                 </ul>
                             </div>
                         </div>
@@ -347,13 +350,13 @@
                                     Tujuan Sistem
                                 </h6>
                                 <p class="info-description">
-                                    Sistem ini membantu Mahkamah Agung dalam:
+                                    Sistem ini membantu Pengadilan Negeri Sleman dalam:
                                 </p>
                                 <ul class="info-list">
                                     <li>Mengidentifikasi kebutuhan pelatihan pegawai</li>
                                     <li>Memprioritaskan pelatihan berdasarkan analisis objektif</li>
-                                    <li>Meningkatkan kompetensi SDM secara terstruktur</li>
-                                    <li>Mengoptimalkan alokasi anggaran pelatihan</li>
+                                    <li>Menyusun dasar rencana pengembangan kompetensi tahunan</li>
+                                    <li>Mengoptimalkan prioritas dan anggaran pelatihan</li>
                                 </ul>
                             </div>
                         </div>

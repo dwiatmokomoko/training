@@ -15,8 +15,8 @@ class SAWService
      */
     public function calculateTrainingNeeds(): Collection
     {
-        $employees = Employee::with(['assessments.scores.criteria', 'position'])->get();
-        $criteria = Criteria::all();
+        $employees = Employee::with(['assessments.scores.criteria', 'position.jobFamily', 'workUnit'])->get();
+        $criteria = Criteria::latestTna()->get();
         
         if ($employees->isEmpty() || $criteria->isEmpty()) {
             return collect();
@@ -37,13 +37,15 @@ class SAWService
                 continue;
             }
 
-            $sawScore = $this->calculateSAWScore($latestAssessment, $criteria);
+            $breakdown = $this->calculateEmployeeBreakdown($employee, $latestAssessment, $criteria);
+            $sawScore = collect($breakdown)->sum('weighted_score');
             
             if ($sawScore > 0) {
                 $results->push([
                     'employee' => $employee,
                     'assessment' => $latestAssessment,
                     'saw_score' => $sawScore,
+                    'breakdown' => $breakdown,
                     'training_recommendation' => $this->generateTrainingRecommendation($employee, $sawScore)
                 ]);
             }
@@ -56,64 +58,169 @@ class SAWService
     /**
      * Hitung skor SAW untuk assessment tertentu
      */
-    private function calculateSAWScore(Assessment $assessment, Collection $criteria): float
+    public function calculateEmployeeBreakdown(Employee $employee, Assessment $assessment, ?Collection $criteria = null): array
     {
-        $normalizedScores = [];
+        $criteria ??= Criteria::latestTna()->get();
         $assessmentScores = $assessment->scores->keyBy('criteria_id');
+        $breakdown = [];
 
-        // Normalisasi nilai untuk setiap kriteria
         foreach ($criteria as $criterion) {
-            $score = $assessmentScores->get($criterion->id);
-            
-            if (!$score) {
-                continue; // Skip jika tidak ada score untuk kriteria ini
+            $rawScore = $this->resolveCriterionScore($employee, $criterion, $assessmentScores);
+
+            if ($rawScore === null) {
+                continue;
             }
 
-            $normalizedScore = $this->normalizeScore(
-                $score->score,
-                $criterion,
-                $this->getMinMaxValues($criterion->id)
-            );
+            $normalizedScore = $this->normalizeScore($rawScore, $criterion);
+            $weightedScore = $normalizedScore * (float) $criterion->weight;
 
-            $normalizedScores[] = $normalizedScore * $criterion->weight;
+            $breakdown[] = [
+                'criteria' => $criterion,
+                'raw_score' => $rawScore,
+                'normalized_score' => $normalizedScore,
+                'weighted_score' => $weightedScore,
+                'source' => $this->criterionSource($criterion),
+            ];
         }
 
-        return array_sum($normalizedScores);
+        return $breakdown;
     }
 
     /**
-     * Normalisasi skor berdasarkan jenis kriteria
+     * Normalisasi skor berdasarkan jenis kriteria.
+     * Skor akhir selalu dibaca sebagai prioritas kebutuhan pelatihan: semakin tinggi semakin prioritas.
      */
-    private function normalizeScore(float $score, Criteria $criteria, array $minMax): float
+    private function normalizeScore(float $score, Criteria $criteria): float
     {
-        $min = $minMax['min'];
-        $max = $minMax['max'];
+        $code = strtoupper((string) $criteria->code);
 
-        if ($max == $min) {
-            return 1; // Jika semua nilai sama
+        if ($code === 'C5') {
+            return $score / 5;
         }
 
         if ($criteria->type === 'benefit') {
-            // Untuk kriteria benefit: semakin tinggi semakin baik
-            // Normalisasi ke skala 0-1 dari skala 1-5
             return $score / 5;
-        } else {
-            // Untuk kriteria cost: semakin rendah semakin baik
-            return (6 - $score) / 5;
         }
+
+        return (6 - $score) / 5;
     }
 
-    /**
-     * Dapatkan nilai min dan max untuk kriteria tertentu dari assessment_scores
-     */
-    private function getMinMaxValues(int $criteriaId): array
+    private function resolveCriterionScore(Employee $employee, Criteria $criterion, Collection $assessmentScores): ?int
     {
-        $scores = \App\Models\AssessmentScore::where('criteria_id', $criteriaId)->get();
-        
-        return [
-            'min' => $scores->min('score') ?? 1,
-            'max' => $scores->max('score') ?? 5
-        ];
+        $code = strtoupper((string) $criterion->code);
+
+        return match ($code) {
+            'C1' => $assessmentScores->get($criterion->id)?->score,
+            'C2' => $this->scoreTrainingGap($employee),
+            'C3' => $this->scoreCurrentPositionTenure($employee),
+            'C4' => $this->scorePromotionHistory($employee),
+            'C5' => $this->scoreAge($employee),
+            default => $assessmentScores->get($criterion->id)?->score,
+        };
+    }
+
+    private function scoreTrainingGap(Employee $employee): int
+    {
+        $years = $employee->years_since_last_training;
+
+        if ($years === null || $years > 5) {
+            return 5;
+        }
+
+        if ($years >= 4) {
+            return 4;
+        }
+
+        if ($years >= 2) {
+            return 3;
+        }
+
+        if ($years >= 1) {
+            return 2;
+        }
+
+        return 1;
+    }
+
+    private function scoreCurrentPositionTenure(Employee $employee): int
+    {
+        $years = $employee->current_position_years;
+
+        if ($years > 8) {
+            return 5;
+        }
+
+        if ($years >= 6) {
+            return 4;
+        }
+
+        if ($years >= 4) {
+            return 3;
+        }
+
+        if ($years >= 2) {
+            return 2;
+        }
+
+        return 1;
+    }
+
+    private function scorePromotionHistory(Employee $employee): int
+    {
+        $years = $employee->years_since_last_promotion;
+
+        if ($years === null) {
+            return 1;
+        }
+
+        if ($years < 1) {
+            return 5;
+        }
+
+        if ($years <= 3) {
+            return 4;
+        }
+
+        if ($years <= 5) {
+            return 3;
+        }
+
+        return 2;
+    }
+
+    private function scoreAge(Employee $employee): int
+    {
+        $age = $employee->age;
+
+        if ($age === null || $age <= 30) {
+            return 5;
+        }
+
+        if ($age <= 40) {
+            return 4;
+        }
+
+        if ($age <= 50) {
+            return 3;
+        }
+
+        if ($age <= 55) {
+            return 2;
+        }
+
+        return 1;
+    }
+
+    private function criterionSource(Criteria $criterion): string
+    {
+        return match (strtoupper((string) $criterion->code)) {
+            'C1' => 'Penilaian atasan langsung',
+            'C2' => 'Riwayat pelatihan pegawai',
+            'C3' => 'TMT jabatan saat ini',
+            'C4' => 'Riwayat promosi/jabatan',
+            'C5' => 'Tanggal lahir pegawai',
+            default => 'Assessment',
+        };
     }
 
     /**
@@ -125,26 +232,27 @@ class SAWService
 
         // Analisis berdasarkan posisi
         $positionName = strtolower($employee->position->name);
-        if (str_contains($positionName, 'hakim')) {
+        $familyCode = $employee->position->jobFamily?->code;
+
+        if ($familyCode === 'HK' || str_contains($positionName, 'hakim')) {
             $recommendations[] = 'Pelatihan Teknis Yudisial';
-            $recommendations[] = 'Workshop Hukum Terbaru';
-        } elseif (str_contains($positionName, 'panitera')) {
+            $recommendations[] = 'Bimbingan Teknis Penyusunan Putusan';
+        } elseif ($familyCode === 'KP' || str_contains($positionName, 'panitera')) {
             $recommendations[] = 'Pelatihan Administrasi Peradilan';
-            $recommendations[] = 'Manajemen Berkas Perkara';
+            $recommendations[] = 'Bimbingan Teknis SIPP dan E-Court';
         } else {
-            $recommendations[] = 'Pelatihan Administrasi Peradilan';
-            $recommendations[] = 'Peningkatan Kompetensi Pelayanan';
+            $recommendations[] = 'Pelatihan Administrasi Kesekretariatan';
+            $recommendations[] = 'Pelatihan Aplikasi Kerja dan Layanan Internal';
         }
 
-        // Analisis berdasarkan skor SAW
-        if ($sawScore < 0.5) {
-            $recommendations[] = 'Pelatihan Dasar Kompetensi';
+        if ($sawScore >= 0.75) {
+            $recommendations[] = 'Pelatihan Wajib Prioritas';
             $priority = 'Tinggi';
-        } elseif ($sawScore < 0.7) {
-            $recommendations[] = 'Pelatihan Pengembangan Lanjutan';
+        } elseif ($sawScore >= 0.55) {
+            $recommendations[] = 'Pelatihan Pengembangan Kompetensi';
             $priority = 'Sedang';
         } else {
-            $recommendations[] = 'Pelatihan Spesialisasi';
+            $recommendations[] = 'Coaching atau E-Learning Penyegaran';
             $priority = 'Rendah';
         }
 
@@ -160,14 +268,14 @@ class SAWService
      */
     private function determineUrgencyLevel(float $sawScore): string
     {
-        if ($sawScore < 0.3) {
+        if ($sawScore >= 0.85) {
             return 'Sangat Mendesak';
-        } elseif ($sawScore < 0.5) {
+        } elseif ($sawScore >= 0.70) {
             return 'Mendesak';
-        } elseif ($sawScore < 0.7) {
+        } elseif ($sawScore >= 0.55) {
             return 'Perlu Perhatian';
         } else {
-            return 'Dapat Ditunda';
+            return 'Terjadwal';
         }
     }
 

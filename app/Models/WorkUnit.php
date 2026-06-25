@@ -6,22 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Position extends Model
+class WorkUnit extends Model
 {
     protected $fillable = [
-        'job_family_id',
         'name',
-        'description',
-        'level'
+        'parent_id',
     ];
 
-    protected $casts = [
-        'level' => 'string'
-    ];
-
-    public function jobFamily(): BelongsTo
+    public function parent(): BelongsTo
     {
-        return $this->belongsTo(JobFamily::class);
+        return $this->belongsTo(WorkUnit::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(WorkUnit::class, 'parent_id');
     }
 
     public function employees(): HasMany
