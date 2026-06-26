@@ -81,6 +81,178 @@
     </div>
 </div>
 
+<!-- SAW Calculation Flow -->
+<div class="card saw-method-card mb-5">
+    <div class="card-header">
+        <div>
+            <h5 class="mb-0">
+                <i class="fas fa-square-root-variable me-2"></i>
+                Alur Perhitungan SAW
+            </h5>
+            <small>Matriks keputusan X, normalisasi R, nilai preferensi V, lalu ranking prioritas.</small>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="saw-formula-grid mb-4">
+            <div class="formula-box">
+                <span>Benefit</span>
+                <strong>rij = xij / max(xij)</strong>
+                <p>C2, C3, dan C4. Semakin besar skor mentah, semakin besar nilai normalisasi.</p>
+            </div>
+            <div class="formula-box">
+                <span>Cost</span>
+                <strong>rij = min(xij) / xij</strong>
+                <p>C1 dan C5. Semakin kecil skor mentah, semakin besar nilai normalisasi.</p>
+            </div>
+            <div class="formula-box">
+                <span>Preferensi</span>
+                <strong>Vi = SUM(Wj x rij)</strong>
+                <p>Nilai akhir untuk mengurutkan prioritas kebutuhan pelatihan pegawai.</p>
+            </div>
+        </div>
+
+        <div class="table-responsive data-table-shell mb-4">
+            <div class="table-caption">
+                <h6>Matriks Keputusan (X)</h6>
+                <p>Nilai mentah setiap pegawai sebelum normalisasi. Angka diambil dari assessment dan data pegawai.</p>
+            </div>
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Alternatif</th>
+                        <th>Pegawai</th>
+                        @foreach($criteria as $criterion)
+                            <th class="text-center">{{ $criterion->code }}</th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($decisionMatrix->take(10) as $index => $row)
+                        <tr>
+                            <td class="fw-bold">A{{ $index + 1 }}</td>
+                            <td>
+                                <div class="fw-bold">{{ $row['employee']->name }}</div>
+                                <small class="text-muted">{{ $row['employee']->position->name ?? '-' }}</small>
+                            </td>
+                            @foreach($criteria as $criterion)
+                                @php($code = strtoupper((string) $criterion->code))
+                                <td class="text-center">{{ number_format($row['scores'][$code] ?? 0, 0) }}</td>
+                            @endforeach
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="{{ $criteria->count() + 2 }}" class="text-center text-muted py-4">
+                                Belum ada matriks keputusan. Jalankan analisis setelah data assessment tersedia.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                @if($decisionMatrix->isNotEmpty())
+                    <tfoot class="table-secondary">
+                        <tr>
+                            <th colspan="2">Min / Max Kolom</th>
+                            @foreach($criteria as $criterion)
+                                @php($bound = $criteriaBounds[strtoupper((string) $criterion->code)] ?? ['min' => 0, 'max' => 0])
+                                <th class="text-center">
+                                    {{ number_format($bound['min'], 0) }} / {{ number_format($bound['max'], 0) }}
+                                </th>
+                            @endforeach
+                        </tr>
+                    </tfoot>
+                @endif
+            </table>
+        </div>
+
+        <div class="table-responsive data-table-shell mb-4">
+            <div class="table-caption">
+                <h6>Hasil Normalisasi (R)</h6>
+                <p>Nilai R diperoleh dari rumus benefit/cost per kolom kriteria, kemudian dikalikan bobot.</p>
+            </div>
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Rank</th>
+                        <th>Pegawai</th>
+                        @foreach($criteria as $criterion)
+                            <th class="text-center">{{ $criterion->code }}</th>
+                        @endforeach
+                        <th class="text-center">V</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($sawPreview as $index => $row)
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary">#{{ $index + 1 }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ $row['employee']->name }}</div>
+                                <small class="text-muted">{{ $row['employee']->nip }}</small>
+                            </td>
+                            @foreach($criteria as $criterion)
+                                @php($item = collect($row['breakdown'])->first(fn ($detail) => $detail['criteria']->id === $criterion->id))
+                                <td class="text-center">{{ $item ? number_format($item['normalized_score'], 3) : '-' }}</td>
+                            @endforeach
+                            <td class="text-center fw-bold text-primary">{{ number_format($row['saw_score'], 4) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="{{ $criteria->count() + 3 }}" class="text-center text-muted py-4">
+                                Belum ada hasil normalisasi.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-responsive data-table-shell">
+            <div class="table-caption">
+                <h6>Hasil Perangkingan Prioritas</h6>
+                <p>Nilai V tertinggi menjadi prioritas pertama untuk rekomendasi pelatihan.</p>
+            </div>
+            <table class="table table-sm table-striped align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Rank</th>
+                        <th>NIP</th>
+                        <th>Nama Pegawai</th>
+                        <th>Jabatan</th>
+                        <th>Nilai V</th>
+                        <th>Prioritas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($sawPreview as $index => $row)
+                        <tr>
+                            <td class="fw-bold">#{{ $index + 1 }}</td>
+                            <td>{{ $row['employee']->nip }}</td>
+                            <td>{{ $row['employee']->name }}</td>
+                            <td>{{ $row['employee']->position->name ?? '-' }}</td>
+                            <td class="fw-bold text-primary">{{ number_format($row['saw_score'], 4) }}</td>
+                            <td>
+                                @if($index < 3)
+                                    <span class="badge bg-danger">Sangat Tinggi</span>
+                                @elseif($index < 10)
+                                    <span class="badge bg-warning text-dark">Tinggi</span>
+                                @else
+                                    <span class="badge bg-secondary">Sedang</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                Ranking belum tersedia.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- Status Distribution Chart -->
 <div class="row mb-5">
     <div class="col-lg-6">
@@ -265,6 +437,69 @@
     font-weight: 500;
 }
 
+.saw-method-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.saw-method-card .card-header small {
+    display: inline-flex;
+    margin-top: 0.25rem;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.saw-formula-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.formula-box {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1rem;
+    background: #f8fbf9;
+}
+
+.formula-box span {
+    display: block;
+    color: var(--ma-green);
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+}
+
+.formula-box strong {
+    display: block;
+    color: var(--text-main);
+    font-size: 1.05rem;
+    margin-bottom: 0.4rem;
+}
+
+.formula-box p,
+.table-caption p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.table-caption {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.table-caption h6 {
+    margin: 0;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
 /* Print Styles */
 @media print {
     .btn, .card-header, .print-hide {
@@ -318,6 +553,17 @@
 
 #reportTable td:nth-child(10) {
     text-align: left;
+}
+
+@media (max-width: 991.98px) {
+    .saw-formula-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .table-caption {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
 </style>
 

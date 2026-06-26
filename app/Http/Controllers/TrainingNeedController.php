@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\TrainingNeed;
 use App\Models\Employee;
+use App\Models\Criteria;
 use App\Services\SAWService;
 
 class TrainingNeedController extends Controller
@@ -58,6 +59,14 @@ class TrainingNeedController extends Controller
         $trainingNeeds = TrainingNeed::with(['employee.position'])
             ->orderBy('priority_rank')
             ->get();
+        $criteria = Criteria::latestTna()->get();
+        $sawService = app(SAWService::class);
+        $decisionMatrix = $sawService->buildDecisionMatrix(criteria: $criteria);
+        $criteriaBounds = $sawService->criteriaBounds($decisionMatrix, $criteria);
+        $normalizedMatrix = $sawService->normalizeMatrix($decisionMatrix, $criteria, $criteriaBounds)
+            ->sortByDesc('saw_score')
+            ->values();
+        $sawPreview = $normalizedMatrix->take(10);
 
         $summary = [
             'total' => $trainingNeeds->count(),
@@ -66,7 +75,15 @@ class TrainingNeedController extends Controller
             'avg_score' => $trainingNeeds->avg('saw_score')
         ];
 
-        return view('training-needs.report', compact('trainingNeeds', 'summary'));
+        return view('training-needs.report', compact(
+            'trainingNeeds',
+            'summary',
+            'criteria',
+            'decisionMatrix',
+            'criteriaBounds',
+            'normalizedMatrix',
+            'sawPreview'
+        ));
     }
 
     public function recommendations()

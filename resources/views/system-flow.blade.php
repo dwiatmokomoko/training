@@ -77,6 +77,31 @@
         ['code' => 'C5', 'name' => 'Usia', 'simple' => 'Dipakai sebagai faktor pendukung perencanaan pengembangan.', 'type' => 'Cost', 'weight' => '6,7%', 'source' => 'Tanggal lahir'],
     ];
 
+    $ipoRows = [
+        ['input' => 'Data pegawai, jabatan, unit kerja, tanggal lahir, TMT jabatan', 'process' => 'Validasi profil dan pemetaan rumpun jabatan', 'output' => 'Profil pegawai siap dianalisis'],
+        ['input' => 'Riwayat pelatihan, riwayat promosi, masa jabatan', 'process' => 'Konversi otomatis menjadi nilai C2, C3, dan C4', 'output' => 'Skor kebutuhan pengembangan karier'],
+        ['input' => 'Nilai SKP/IKU/KPI dan indikator kompetensi', 'process' => 'Konversi nilai kinerja berbasis kompetensi menjadi C1', 'output' => 'Skor capaian kinerja pegawai'],
+        ['input' => 'Kriteria SAW dan bobot preferensi', 'process' => 'Normalisasi benefit/cost dan perhitungan V', 'output' => 'Ranking prioritas dan rekomendasi pelatihan'],
+    ];
+
+    $systemFlow = [
+        'Login pengguna',
+        'Buka Data Pegawai',
+        'Lengkapi riwayat jabatan dan pelatihan',
+        'Input penilaian kinerja',
+        'Ambil kriteria dan bobot SAW',
+        'Normalisasi nilai benefit/cost',
+        'Hitung nilai V',
+        'Urutkan ranking',
+        'Tampilkan rekomendasi dan laporan',
+    ];
+
+    $sawFormula = [
+        ['name' => 'Benefit', 'formula' => 'rij = xij / max(xij)', 'desc' => 'Dipakai untuk C2, C3, dan C4. Nilai makin besar berarti prioritas makin tinggi.'],
+        ['name' => 'Cost', 'formula' => 'rij = min(xij) / xij', 'desc' => 'Dipakai untuk C1 dan C5. Nilai yang perlu perhatian akan dibaca dalam konteks prioritas pelatihan.'],
+        ['name' => 'Preferensi', 'formula' => 'Vi = SUM(Wj x rij)', 'desc' => 'Hasil akhir digunakan untuk menentukan ranking prioritas pelatihan pegawai.'],
+    ];
+
     $modules = [
         ['menu' => 'Dashboard', 'plain' => 'Ringkasan gap kompetensi, pegawai per level, prioritas pelatihan, status rencana/realisasi, dan notifikasi.', 'route' => route('dashboard'), 'icon' => 'fa-tachometer-alt'],
         ['menu' => 'Manajemen Pengguna', 'plain' => 'Akun pegawai, atasan, SDM, pimpinan, role RBAC, aktivasi, reset password, dan audit log.', 'route' => route('users-management'), 'icon' => 'fa-user-shield'],
@@ -154,6 +179,83 @@
             <i class="fas fa-ranking-star"></i>
             <h6>Hasil Keluar</h6>
             <p>Sistem menampilkan ranking pegawai dan rekomendasi pelatihan prioritas.</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-diagram-project me-2"></i>
+                Alur Sistem SAW
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="section-subtitle mb-3">
+                Alur ini menunjukkan bagaimana sistem mengubah data pegawai menjadi ranking kebutuhan pelatihan. Pengguna cukup melengkapi data dan menjalankan analisis, sedangkan normalisasi serta perangkingan dihitung otomatis oleh aplikasi.
+            </p>
+
+            <div class="saw-process-grid mb-4">
+                <div class="saw-process-card">
+                    <span>1</span>
+                    <h6>Input Data</h6>
+                    <p>Profil pegawai, jabatan, unit kerja, riwayat pelatihan, riwayat promosi, usia, dan nilai kompetensi.</p>
+                </div>
+                <div class="saw-process-card">
+                    <span>2</span>
+                    <h6>Matriks Keputusan X</h6>
+                    <p>Sistem menyusun skor C1 sampai C5 untuk setiap pegawai sebagai alternatif yang akan dibandingkan.</p>
+                </div>
+                <div class="saw-process-card">
+                    <span>3</span>
+                    <h6>Normalisasi R</h6>
+                    <p>Kriteria benefit memakai nilai dibagi maksimum, sedangkan cost memakai minimum dibagi nilai pegawai.</p>
+                </div>
+                <div class="saw-process-card">
+                    <span>4</span>
+                    <h6>Nilai V dan Ranking</h6>
+                    <p>Nilai normalisasi dikalikan bobot, dijumlahkan, lalu diurutkan dari prioritas tertinggi.</p>
+                </div>
+            </div>
+
+            <div class="flow-strip mb-4">
+                @foreach($systemFlow as $index => $item)
+                    <div class="flow-node">
+                        <span>{{ $index + 1 }}</span>
+                        <strong>{{ $item }}</strong>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="saw-formula-flow mb-4">
+                @foreach($sawFormula as $formula)
+                    <div class="formula-tile">
+                        <small>{{ $formula['name'] }}</small>
+                        <strong>{{ $formula['formula'] }}</strong>
+                        <p>{{ $formula['desc'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="table-responsive data-table-shell">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Input</th>
+                            <th>Proses Sistem</th>
+                            <th>Output</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($ipoRows as $row)
+                            <tr>
+                                <td>{{ $row['input'] }}</td>
+                                <td>{{ $row['process'] }}</td>
+                                <td>{{ $row['output'] }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -425,6 +527,105 @@
         line-height: 1.5;
     }
 
+    .saw-process-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .saw-process-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1rem;
+        background: #fbfdfb;
+        min-height: 100%;
+    }
+
+    .saw-process-card span {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: var(--ma-dark-green);
+        color: white;
+        font-weight: 800;
+        margin-bottom: 0.85rem;
+    }
+
+    .saw-process-card h6,
+    .formula-tile strong {
+        margin: 0;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .saw-process-card p,
+    .formula-tile p {
+        margin: 0.45rem 0 0;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .flow-strip {
+        display: grid;
+        grid-template-columns: repeat(9, minmax(120px, 1fr));
+        gap: 0.65rem;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+
+    .flow-node {
+        position: relative;
+        display: grid;
+        gap: 0.5rem;
+        min-width: 120px;
+        padding: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .flow-node span {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: var(--ma-light-green);
+        color: var(--ma-dark-green);
+        font-weight: 800;
+    }
+
+    .flow-node strong {
+        font-size: 0.86rem;
+        line-height: 1.35;
+    }
+
+    .saw-formula-flow {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .formula-tile {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1rem;
+        background: var(--flow-soft);
+    }
+
+    .formula-tile small {
+        display: block;
+        color: var(--ma-green);
+        font-weight: 800;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+
     .flow-roadmap {
         display: grid;
         gap: 1rem;
@@ -659,6 +860,11 @@
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
+        .saw-process-grid,
+        .saw-formula-flow {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
         .import-flow {
             grid-template-columns: repeat(3, minmax(0, 1fr));
         }
@@ -672,6 +878,11 @@
         }
 
         .quick-explain {
+            grid-template-columns: 1fr;
+        }
+
+        .saw-process-grid,
+        .saw-formula-flow {
             grid-template-columns: 1fr;
         }
 

@@ -15,44 +15,139 @@ class SAWService
      */
     public function calculateTrainingNeeds(): Collection
     {
-        $employees = Employee::with(['assessments.scores.criteria', 'position.jobFamily', 'workUnit'])->get();
         $criteria = Criteria::latestTna()->get();
         
+        if ($criteria->isEmpty()) {
+            return collect();
+        }
+
+        $matrix = $this->buildDecisionMatrix(criteria: $criteria);
+
+        if ($matrix->isEmpty()) {
+            return collect();
+        }
+
+        // Urutkan berdasarkan skor SAW (tertinggi = prioritas tertinggi)
+        return $this->normalizeMatrix($matrix, $criteria)
+            ->filter(fn ($result) => $result['saw_score'] > 0)
+            ->sortByDesc('saw_score')
+            ->values();
+    }
+
+    /**
+     * Bentuk matriks keputusan X dari seluruh alternatif pegawai.
+     */
+    public function buildDecisionMatrix(?Collection $employees = null, ?Collection $criteria = null): Collection
+    {
+        $employees ??= Employee::with(['assessments.scores.criteria', 'position.jobFamily', 'workUnit'])->get();
+        $criteria ??= Criteria::latestTna()->get();
+
         if ($employees->isEmpty() || $criteria->isEmpty()) {
             return collect();
         }
 
-        $results = collect();
-
-        foreach ($employees as $employee) {
-            // Skip employees without assessments
+        return $employees->map(function (Employee $employee) use ($criteria) {
             if ($employee->assessments->isEmpty()) {
-                continue;
+                return null;
             }
 
-            // Get the latest assessment for this employee
             $latestAssessment = $employee->assessments->sortByDesc('created_at')->first();
-            
+
             if (!$latestAssessment || $latestAssessment->scores->isEmpty()) {
-                continue;
+                return null;
             }
 
-            $breakdown = $this->calculateEmployeeBreakdown($employee, $latestAssessment, $criteria);
-            $sawScore = collect($breakdown)->sum('weighted_score');
-            
-            if ($sawScore > 0) {
-                $results->push([
-                    'employee' => $employee,
-                    'assessment' => $latestAssessment,
-                    'saw_score' => $sawScore,
-                    'breakdown' => $breakdown,
-                    'training_recommendation' => $this->generateTrainingRecommendation($employee, $sawScore)
-                ]);
+            $assessmentScores = $latestAssessment->scores->keyBy('criteria_id');
+            $scores = [];
+
+            foreach ($criteria as $criterion) {
+                $rawScore = $this->resolveCriterionScore($employee, $criterion, $assessmentScores);
+
+                if ($rawScore !== null) {
+                    $scores[strtoupper((string) $criterion->code)] = (float) $rawScore;
+                }
             }
+
+            if (empty($scores)) {
+                return null;
+            }
+
+            return [
+                'employee' => $employee,
+                'assessment' => $latestAssessment,
+                'scores' => $scores,
+            ];
+        })->filter()->values();
+    }
+
+    /**
+     * Ambil nilai minimum dan maksimum tiap kolom kriteria.
+     */
+    public function criteriaBounds(Collection $matrix, ?Collection $criteria = null): array
+    {
+        $criteria ??= Criteria::latestTna()->get();
+        $bounds = [];
+
+        foreach ($criteria as $criterion) {
+            $code = strtoupper((string) $criterion->code);
+            $values = $matrix
+                ->pluck("scores.{$code}")
+                ->filter(fn ($value) => $value !== null)
+                ->map(fn ($value) => (float) $value);
+
+            $bounds[$code] = [
+                'min' => $values->isEmpty() ? 0.0 : (float) $values->min(),
+                'max' => $values->isEmpty() ? 0.0 : (float) $values->max(),
+            ];
         }
 
-        // Urutkan berdasarkan skor SAW (tertinggi = prioritas tertinggi)
-        return $results->sortByDesc('saw_score')->values();
+        return $bounds;
+    }
+
+    /**
+     * Normalisasi matriks keputusan menjadi matriks R dan hitung nilai preferensi V.
+     */
+    public function normalizeMatrix(Collection $matrix, ?Collection $criteria = null, ?array $bounds = null): Collection
+    {
+        $criteria ??= Criteria::latestTna()->get();
+        $bounds ??= $this->criteriaBounds($matrix, $criteria);
+
+        return $matrix->map(function (array $row) use ($criteria, $bounds) {
+            $breakdown = [];
+            $sawScore = 0.0;
+
+            foreach ($criteria as $criterion) {
+                $code = strtoupper((string) $criterion->code);
+                $rawScore = $row['scores'][$code] ?? null;
+
+                if ($rawScore === null) {
+                    continue;
+                }
+
+                $normalizedScore = $this->normalizeValue((float) $rawScore, $criterion, $bounds[$code] ?? ['min' => 0, 'max' => 0]);
+                $weightedScore = $normalizedScore * (float) $criterion->weight;
+                $sawScore += $weightedScore;
+
+                $breakdown[] = [
+                    'criteria' => $criterion,
+                    'raw_score' => $rawScore,
+                    'normalized_score' => $normalizedScore,
+                    'weighted_score' => $weightedScore,
+                    'source' => $this->criterionSource($criterion),
+                    'formula' => $this->criterionFormula($criterion),
+                    'bound' => $bounds[$code] ?? ['min' => 0, 'max' => 0],
+                ];
+            }
+
+            return [
+                'employee' => $row['employee'],
+                'assessment' => $row['assessment'],
+                'scores' => $row['scores'],
+                'saw_score' => $sawScore,
+                'breakdown' => $breakdown,
+                'training_recommendation' => $this->generateTrainingRecommendation($row['employee'], $sawScore),
+            ];
+        })->values();
     }
 
     /**
@@ -61,48 +156,39 @@ class SAWService
     public function calculateEmployeeBreakdown(Employee $employee, Assessment $assessment, ?Collection $criteria = null): array
     {
         $criteria ??= Criteria::latestTna()->get();
-        $assessmentScores = $assessment->scores->keyBy('criteria_id');
-        $breakdown = [];
+        $employees = Employee::with(['assessments.scores.criteria', 'position.jobFamily', 'workUnit'])->get();
+        $matrix = $this->buildDecisionMatrix($employees, $criteria);
+        $result = $this->normalizeMatrix($matrix, $criteria)
+            ->first(fn ($row) => $row['employee']->id === $employee->id && $row['assessment']->id === $assessment->id);
 
-        foreach ($criteria as $criterion) {
-            $rawScore = $this->resolveCriterionScore($employee, $criterion, $assessmentScores);
-
-            if ($rawScore === null) {
-                continue;
-            }
-
-            $normalizedScore = $this->normalizeScore($rawScore, $criterion);
-            $weightedScore = $normalizedScore * (float) $criterion->weight;
-
-            $breakdown[] = [
-                'criteria' => $criterion,
-                'raw_score' => $rawScore,
-                'normalized_score' => $normalizedScore,
-                'weighted_score' => $weightedScore,
-                'source' => $this->criterionSource($criterion),
-            ];
-        }
-
-        return $breakdown;
+        return $result['breakdown'] ?? [];
     }
 
     /**
-     * Normalisasi skor berdasarkan jenis kriteria.
-     * Skor akhir selalu dibaca sebagai prioritas kebutuhan pelatihan: semakin tinggi semakin prioritas.
+     * Normalisasi SAW mengikuti kolom alternatif: benefit = x/max, cost = min/x.
      */
-    private function normalizeScore(float $score, Criteria $criteria): float
+    private function normalizeValue(float $score, Criteria $criteria, array $bound): float
     {
-        $code = strtoupper((string) $criteria->code);
+        $type = strtolower((string) $criteria->type);
+        $max = (float) ($bound['max'] ?? 0);
+        $min = (float) ($bound['min'] ?? 0);
 
-        if ($code === 'C5') {
-            return $score / 5;
+        if ($score <= 0) {
+            return 0.0;
         }
 
-        if ($criteria->type === 'benefit') {
-            return $score / 5;
+        if ($type === 'benefit') {
+            return $max > 0 ? $score / $max : 0.0;
         }
 
-        return (6 - $score) / 5;
+        return $min > 0 ? $min / $score : 0.0;
+    }
+
+    private function criterionFormula(Criteria $criterion): string
+    {
+        return strtolower((string) $criterion->type) === 'benefit'
+            ? 'rij = xij / max(xij)'
+            : 'rij = min(xij) / xij';
     }
 
     private function resolveCriterionScore(Employee $employee, Criteria $criterion, Collection $assessmentScores): ?int

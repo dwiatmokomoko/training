@@ -114,6 +114,8 @@
                                 <th>Sumber Data</th>
                                 <th>Bobot</th>
                                 <th>Nilai</th>
+                                <th>Acuan Kolom</th>
+                                <th>Rumus</th>
                                 <th>Normalisasi</th>
                                 <th>Skor Terbobot</th>
                             </tr>
@@ -134,6 +136,11 @@
                                 <td>{{ $item['source'] }}</td>
                                 <td>{{ number_format($criterion->weight * 100, 1) }}%</td>
                                 <td>{{ $item['raw_score'] }}/5</td>
+                                <td>
+                                    Min {{ number_format($item['bound']['min'] ?? 0, 0) }} /
+                                    Max {{ number_format($item['bound']['max'] ?? 0, 0) }}
+                                </td>
+                                <td><code>{{ $item['formula'] ?? '-' }}</code></td>
                                 <td>{{ number_format($item['normalized_score'], 3) }}</td>
                                 <td>{{ number_format($item['weighted_score'], 4) }}</td>
                             </tr>
@@ -141,7 +148,7 @@
                         </tbody>
                         <tfoot class="table-secondary">
                             <tr>
-                                <th colspan="7">Total Skor SAW</th>
+                                <th colspan="9">Total Skor SAW</th>
                                 <th>{{ number_format($totalWeightedScore, 4) }}</th>
                             </tr>
                         </tfoot>
