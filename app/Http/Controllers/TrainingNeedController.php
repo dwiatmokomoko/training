@@ -15,8 +15,9 @@ class TrainingNeedController extends Controller
         $trainingNeeds = TrainingNeed::with(['employee.position'])
             ->orderBy('priority_rank')
             ->paginate(15);
+        $sawData = $this->buildSawViewData();
 
-        return view('training-needs.index', compact('trainingNeeds'));
+        return view('training-needs.index', array_merge(compact('trainingNeeds'), $sawData));
     }
 
     public function show(TrainingNeed $trainingNeed)
@@ -59,14 +60,7 @@ class TrainingNeedController extends Controller
         $trainingNeeds = TrainingNeed::with(['employee.position'])
             ->orderBy('priority_rank')
             ->get();
-        $criteria = Criteria::latestTna()->get();
-        $sawService = app(SAWService::class);
-        $decisionMatrix = $sawService->buildDecisionMatrix(criteria: $criteria);
-        $criteriaBounds = $sawService->criteriaBounds($decisionMatrix, $criteria);
-        $normalizedMatrix = $sawService->normalizeMatrix($decisionMatrix, $criteria, $criteriaBounds)
-            ->sortByDesc('saw_score')
-            ->values();
-        $sawPreview = $normalizedMatrix->take(10);
+        $sawData = $this->buildSawViewData();
 
         $summary = [
             'total' => $trainingNeeds->count(),
@@ -75,15 +69,10 @@ class TrainingNeedController extends Controller
             'avg_score' => $trainingNeeds->avg('saw_score')
         ];
 
-        return view('training-needs.report', compact(
+        return view('training-needs.report', array_merge(compact(
             'trainingNeeds',
-            'summary',
-            'criteria',
-            'decisionMatrix',
-            'criteriaBounds',
-            'normalizedMatrix',
-            'sawPreview'
-        ));
+            'summary'
+        ), $sawData));
     }
 
     public function recommendations()
@@ -111,5 +100,87 @@ class TrainingNeedController extends Controller
         ];
 
         return view('training-recommendations', compact('trainingNeeds', 'groupedByTraining', 'summary'));
+    }
+
+    private function buildSawViewData(): array
+    {
+        $criteria = Criteria::latestTna()->get();
+        $sawService = app(SAWService::class);
+        $decisionMatrix = $sawService->buildDecisionMatrix(criteria: $criteria)
+            ->map(function ($row, $index) {
+                $row['alternative_code'] = 'A' . ($index + 1);
+                $row['preference_code'] = 'V' . ($index + 1);
+
+                return $row;
+            });
+        $criteriaBounds = $sawService->criteriaBounds($decisionMatrix, $criteria);
+        $normalizedMatrix = $sawService->normalizeMatrix($decisionMatrix, $criteria, $criteriaBounds)
+            ->sortByDesc('saw_score')
+            ->values();
+        $sawPreview = $normalizedMatrix->take(10);
+        $preferenceRows = $sawPreview->map(function ($row) {
+            $terms = collect($row['breakdown'])->map(function ($item) {
+                return '(' . number_format((float) $item['criteria']->weight, 3) . ' x ' . number_format($item['normalized_score'], 3) . ')';
+            })->implode(' + ');
+
+            return [
+                'alternative' => $row['alternative_code'] ?? '-',
+                'preference' => $row['preference_code'] ?? '-',
+                'employee' => $row['employee'],
+                'formula' => $terms,
+                'score' => $row['saw_score'],
+            ];
+        });
+
+        return [
+            'criteria' => $criteria,
+            'decisionMatrix' => $decisionMatrix,
+            'criteriaBounds' => $criteriaBounds,
+            'normalizedMatrix' => $normalizedMatrix,
+            'sawPreview' => $sawPreview,
+            'criteriaScaleRows' => $this->criteriaScaleRows(),
+            'preferenceRows' => $preferenceRows,
+        ];
+    }
+
+    private function criteriaScaleRows(): array
+    {
+        return [
+            'C1' => [
+                ['label' => '91-100 (Sangat Baik)', 'score' => 1],
+                ['label' => '81-90 (Baik)', 'score' => 2],
+                ['label' => '71-80 (Cukup)', 'score' => 3],
+                ['label' => '61-70 (Kurang)', 'score' => 4],
+                ['label' => '<= 60 (Sangat Kurang)', 'score' => 5],
+            ],
+            'C2' => [
+                ['label' => 'Belum pernah atau > 5 tahun', 'score' => 5],
+                ['label' => '4-5 tahun', 'score' => 4],
+                ['label' => '2-3 tahun', 'score' => 3],
+                ['label' => '1 tahun', 'score' => 2],
+                ['label' => '< 1 tahun', 'score' => 1],
+            ],
+            'C3' => [
+                ['label' => '> 8 tahun', 'score' => 5],
+                ['label' => '6-8 tahun', 'score' => 4],
+                ['label' => '4-5 tahun', 'score' => 3],
+                ['label' => '2-3 tahun', 'score' => 2],
+                ['label' => '< 2 tahun', 'score' => 1],
+            ],
+            'C4' => [
+                ['label' => 'Baru promosi (< 1 tahun)', 'score' => 5],
+                ['label' => 'Promosi 1-3 tahun', 'score' => 4],
+                ['label' => 'Promosi 3-5 tahun', 'score' => 3],
+                ['label' => 'Promosi > 5 tahun', 'score' => 2],
+                ['label' => 'Tidak pernah promosi', 'score' => 1],
+            ],
+            'C5' => [
+                ['label' => '<= 30 tahun', 'score' => 5],
+                ['label' => '31-40 tahun', 'score' => 4],
+                ['label' => '41-50 tahun', 'score' => 3],
+                ['label' => '51-55 tahun', 'score' => 2],
+                ['label' => '> 55 tahun', 'score' => 1],
+            ],
+        ];
     }
 }

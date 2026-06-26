@@ -113,6 +113,44 @@
 
         <div class="table-responsive data-table-shell mb-4">
             <div class="table-caption">
+                <h6>Kriteria Perhitungan dan Skala Nilai</h6>
+                <p>Tahap awal seperti contoh: sistem menyiapkan kriteria, atribut, bobot, sumber data, dan konversi skor.</p>
+            </div>
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kode</th>
+                        <th>Nama Kriteria</th>
+                        <th>Atribut</th>
+                        <th>Bobot</th>
+                        <th>Skala Nilai</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($criteria as $criterion)
+                        <tr>
+                            <td class="fw-bold">{{ $criterion->code }}</td>
+                            <td>
+                                <div class="fw-bold">{{ $criterion->name }}</div>
+                                <small class="text-muted">{{ $criterion->description }}</small>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ ucfirst($criterion->type) }}</span></td>
+                            <td>{{ number_format($criterion->weight, 3) }}</td>
+                            <td>
+                                <div class="scale-list">
+                                    @foreach($criteriaScaleRows[$criterion->code] ?? [] as $scale)
+                                        <span>{{ $scale['label'] }} = {{ $scale['score'] }}</span>
+                                    @endforeach
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-responsive data-table-shell mb-4">
+            <div class="table-caption">
                 <h6>Matriks Keputusan (X)</h6>
                 <p>Nilai mentah setiap pegawai sebelum normalisasi. Angka diambil dari assessment dan data pegawai.</p>
             </div>
@@ -129,7 +167,7 @@
                 <tbody>
                     @forelse($decisionMatrix->take(10) as $index => $row)
                         <tr>
-                            <td class="fw-bold">A{{ $index + 1 }}</td>
+                            <td class="fw-bold">{{ $row['alternative_code'] ?? 'A' . ($index + 1) }}</td>
                             <td>
                                 <div class="fw-bold">{{ $row['employee']->name }}</div>
                                 <small class="text-muted">{{ $row['employee']->position->name ?? '-' }}</small>
@@ -171,7 +209,7 @@
             <table class="table table-sm table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Rank</th>
+                        <th>Preferensi</th>
                         <th>Pegawai</th>
                         @foreach($criteria as $criterion)
                             <th class="text-center">{{ $criterion->code }}</th>
@@ -183,7 +221,7 @@
                     @forelse($sawPreview as $index => $row)
                         <tr>
                             <td>
-                                <span class="badge bg-primary">#{{ $index + 1 }}</span>
+                                <span class="badge bg-primary">{{ $row['preference_code'] ?? 'V' . ($index + 1) }}</span>
                             </td>
                             <td>
                                 <div class="fw-bold">{{ $row['employee']->name }}</div>
@@ -200,6 +238,40 @@
                             <td colspan="{{ $criteria->count() + 3 }}" class="text-center text-muted py-4">
                                 Belum ada hasil normalisasi.
                             </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-responsive data-table-shell mb-4">
+            <div class="table-caption">
+                <h6>Perhitungan Nilai Preferensi (V)</h6>
+                <p>Setiap nilai normalisasi dikalikan bobot, lalu dijumlahkan untuk mendapatkan skor akhir.</p>
+            </div>
+            <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Alternatif</th>
+                        <th>Pegawai</th>
+                        <th>Perhitungan</th>
+                        <th class="text-center">Hasil V</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($preferenceRows as $row)
+                        <tr>
+                            <td class="fw-bold">{{ $row['preference'] }}</td>
+                            <td>
+                                <div class="fw-bold">{{ $row['employee']->name }}</div>
+                                <small class="text-muted">{{ $row['alternative'] }}</small>
+                            </td>
+                            <td><code>{{ $row['preference'] }} = {{ $row['formula'] }}</code></td>
+                            <td class="text-center fw-bold text-primary">{{ number_format($row['score'], 4) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Belum ada perhitungan preferensi.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -229,7 +301,10 @@
                             <td>{{ $row['employee']->nip }}</td>
                             <td>{{ $row['employee']->name }}</td>
                             <td>{{ $row['employee']->position->name ?? '-' }}</td>
-                            <td class="fw-bold text-primary">{{ number_format($row['saw_score'], 4) }}</td>
+                            <td>
+                                <span class="fw-bold text-primary">{{ number_format($row['saw_score'], 4) }}</span>
+                                <small class="d-block text-muted">{{ $row['preference_code'] ?? 'V' . ($index + 1) }}</small>
+                            </td>
                             <td>
                                 @if($index < 3)
                                     <span class="badge bg-danger">Sangat Tinggi</span>
@@ -498,6 +573,29 @@
     margin: 0;
     font-weight: 800;
     color: var(--text-main);
+}
+
+.scale-list {
+    display: grid;
+    gap: 0.28rem;
+    min-width: 220px;
+}
+
+.scale-list span {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.22rem 0.45rem;
+    border-radius: 6px;
+    background: #eef7f1;
+    color: var(--text-main);
+    font-size: 0.84rem;
+    line-height: 1.35;
+}
+
+.saw-method-card code {
+    color: #165b31;
+    white-space: normal;
+    word-break: break-word;
 }
 
 /* Print Styles */

@@ -142,6 +142,8 @@ class SAWService
             return [
                 'employee' => $row['employee'],
                 'assessment' => $row['assessment'],
+                'alternative_code' => $row['alternative_code'] ?? null,
+                'preference_code' => $row['preference_code'] ?? null,
                 'scores' => $row['scores'],
                 'saw_score' => $sawScore,
                 'breakdown' => $breakdown,
