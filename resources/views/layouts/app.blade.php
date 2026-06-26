@@ -29,12 +29,52 @@
             background: var(--surface-muted);
         }
         
+        .app-shell {
+            display: flex;
+            min-height: 100vh;
+            background: var(--surface-muted);
+        }
+
+        .sidebar-shell {
+            width: 280px;
+            flex: 0 0 280px;
+            transition: margin-left 0.25s ease, transform 0.25s ease;
+            z-index: 1040;
+        }
+
+        .content-shell {
+            flex: 1;
+            min-width: 0;
+        }
+
+        body.sidebar-collapsed .sidebar-shell {
+            margin-left: -280px;
+        }
+
         .sidebar {
             min-height: 100vh;
             background: linear-gradient(180deg, var(--ma-dark-green) 0%, #163f2a 100%);
             box-shadow: 2px 0 16px rgba(15, 23, 42, 0.14);
             position: sticky;
             top: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .sidebar-close {
+            display: none;
+            width: 36px;
+            height: 36px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            color: white;
+            border-radius: 8px;
         }
         
         .sidebar .nav-link {
@@ -162,6 +202,32 @@
             border-radius: 0 0 8px 8px;
         }
 
+        .sidebar-toggle {
+            width: 42px;
+            height: 42px;
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.42);
+            z-index: 1030;
+        }
+
         .toolbar-panel {
             display: flex;
             align-items: center;
@@ -253,9 +319,35 @@
         }
 
         @media (max-width: 991.98px) {
+            .app-shell {
+                display: block;
+            }
+
+            .sidebar-shell {
+                position: fixed;
+                inset: 0 auto 0 0;
+                transform: translateX(-100%);
+                margin-left: 0 !important;
+            }
+
+            body.sidebar-mobile-open .sidebar-shell {
+                transform: translateX(0);
+            }
+
+            body.sidebar-mobile-open .sidebar-overlay {
+                display: block;
+            }
+
             .sidebar {
                 min-height: auto;
                 position: relative;
+                height: 100vh;
+            }
+
+            .sidebar-close {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .toolbar-panel,
@@ -272,6 +364,8 @@
 
         @media print {
             .sidebar,
+            .sidebar-shell,
+            .sidebar-overlay,
             .header-gradient,
             .toolbar-panel,
             .btn,
@@ -314,99 +408,142 @@
     @stack('styles')
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 px-0">
-                <div class="sidebar p-3">
-                    <div class="text-center mb-4">
-                        <div class="d-flex align-items-center justify-content-center mb-2">
-                            <div class="logo-ma me-2">MA</div>
-                            <div>
-                                <h6 class="text-white mb-0">TNA System</h6>
-                                <small class="text-white-50">Mahkamah Agung</small>
-                            </div>
+    <div class="app-shell">
+        <div class="sidebar-overlay" data-sidebar-close></div>
+        <aside class="sidebar-shell">
+            <div class="sidebar p-3">
+                <div class="sidebar-brand mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="logo-ma me-2">MA</div>
+                        <div>
+                            <h6 class="text-white mb-0">TNA System</h6>
+                            <small class="text-white-50">Mahkamah Agung</small>
                         </div>
                     </div>
-                    
-                    <nav class="nav flex-column">
-                        <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                            <i class="fas fa-tachometer-alt me-2"></i>
-                            Dashboard
-                        </a>
-                        <a class="nav-link {{ request()->routeIs('system-flow') ? 'active' : '' }}" href="{{ route('system-flow') }}">
-                            <i class="fas fa-route me-2"></i>
-                            Alur Sistem
-                        </a>
-                        <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
-                            <i class="fas fa-users me-2"></i>
-                            Data Pegawai
-                        </a>
-                        <a class="nav-link {{ request()->routeIs('assessments.*') ? 'active' : '' }}" href="{{ route('assessments.index') }}">
-                            <i class="fas fa-clipboard-check me-2"></i>
-                            Penilaian
-                        </a>
-                        <a class="nav-link {{ request()->routeIs('training-needs.index', 'training-needs.show') ? 'active' : '' }}" href="{{ route('training-needs.index') }}">
-                            <i class="fas fa-graduation-cap me-2"></i>
-                            Kebutuhan Pelatihan
-                        </a>
-                        <a class="nav-link {{ request()->routeIs('training-needs.report') ? 'active' : '' }}" href="{{ route('training-needs.report') }}">
-                            <i class="fas fa-chart-bar me-2"></i>
-                            Laporan
-                        </a>
-                    </nav>
+                    <button type="button" class="sidebar-close" data-sidebar-close aria-label="Tutup menu">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-            </div>
 
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10">
-                <div class="main-content p-4">
-                    <!-- Header -->
-                    <div class="header-gradient">
-                        <div class="container-fluid">
-                            <div class="d-flex justify-content-between align-items-center">
+                <nav class="nav flex-column">
+                    <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Dashboard
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('system-flow') ? 'active' : '' }}" href="{{ route('system-flow') }}">
+                        <i class="fas fa-route me-2"></i>
+                        Alur Sistem
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
+                        <i class="fas fa-users me-2"></i>
+                        Data Pegawai
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('assessments.*') ? 'active' : '' }}" href="{{ route('assessments.index') }}">
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        Penilaian
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('training-needs.index', 'training-needs.show') ? 'active' : '' }}" href="{{ route('training-needs.index') }}">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        Kebutuhan Pelatihan
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('training-needs.report') ? 'active' : '' }}" href="{{ route('training-needs.report') }}">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Laporan
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <main class="content-shell">
+            <div class="main-content p-4">
+                <!-- Header -->
+                <div class="header-gradient">
+                    <div class="container-fluid">
+                        <div class="d-flex justify-content-between align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Tampilkan atau sembunyikan sidebar">
+                                    <i class="fas fa-bars"></i>
+                                </button>
                                 <div>
                                     <h2 class="mb-0">@yield('page-title', 'Dashboard')</h2>
                                     <small class="opacity-75">@yield('page-subtitle', 'Sistem Analisa Kebutuhan Pelatihan')</small>
                                 </div>
-                                <div class="text-end">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-calendar-alt me-2"></i>
-                                        <span>{{ now()->format('d F Y') }}</span>
-                                    </div>
-                                    <small class="opacity-75">{{ now()->format('H:i') }} WIB</small>
+                            </div>
+                            <div class="text-end d-none d-sm-block">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    <span>{{ now()->format('d F Y') }}</span>
                                 </div>
+                                <small class="opacity-75">{{ now()->format('H:i') }} WIB</small>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Alerts -->
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle me-2"></i>
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    @endif
-
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            {{ session('error') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    @endif
-
-                    <!-- Content -->
-                    @yield('content')
                 </div>
+
+                <!-- Alerts -->
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
+                <!-- Content -->
+                @yield('content')
             </div>
-        </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @livewireScripts
+    <script>
+        (function () {
+            const body = document.body;
+            const toggle = document.getElementById('sidebarToggle');
+            const closeButtons = document.querySelectorAll('[data-sidebar-close]');
+            const desktopQuery = window.matchMedia('(min-width: 992px)');
+
+            function applyStoredState() {
+                if (desktopQuery.matches && localStorage.getItem('tna-sidebar-collapsed') === '1') {
+                    body.classList.add('sidebar-collapsed');
+                }
+            }
+
+            function closeMobileSidebar() {
+                body.classList.remove('sidebar-mobile-open');
+            }
+
+            applyStoredState();
+
+            toggle?.addEventListener('click', function () {
+                if (desktopQuery.matches) {
+                    body.classList.toggle('sidebar-collapsed');
+                    localStorage.setItem('tna-sidebar-collapsed', body.classList.contains('sidebar-collapsed') ? '1' : '0');
+                    return;
+                }
+
+                body.classList.toggle('sidebar-mobile-open');
+            });
+
+            closeButtons.forEach(button => button.addEventListener('click', closeMobileSidebar));
+
+            desktopQuery.addEventListener('change', function () {
+                closeMobileSidebar();
+                body.classList.remove('sidebar-collapsed');
+                applyStoredState();
+            });
+        })();
+    </script>
     @stack('scripts')
 </body>
 </html>

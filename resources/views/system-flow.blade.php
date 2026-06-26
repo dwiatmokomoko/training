@@ -2,307 +2,596 @@
 
 @section('title', 'Alur Sistem - Sistem TNA')
 @section('page-title', 'Alur Sistem')
-@section('page-subtitle', 'Urutan kerja Sistem Informasi Training Need Analysis')
+@section('page-subtitle', 'Panduan mudah memahami proses Training Need Analysis')
 
 @section('content')
 @php
-    $phases = [
+    $steps = [
         [
-            'title' => 'Master Organisasi',
+            'title' => 'Siapkan Data Dasar Organisasi',
+            'short' => 'Fondasi sistem',
             'icon' => 'fa-sitemap',
-            'desc' => 'Menyiapkan fondasi data PN Sleman sebelum pegawai dan penilaian dimasukkan.',
-            'items' => ['Rumpun jabatan: Hakim, Kepaniteraan, Kesekretariatan', 'Unit kerja dan subbagian', 'Jabatan dan relasi rumpun jabatan'],
+            'plain' => 'Sistem perlu tahu struktur kantor terlebih dahulu: rumpun jabatan, unit kerja, dan jabatan pegawai.',
+            'prepare' => ['Rumpun jabatan: Hakim, Kepaniteraan, Kesekretariatan', 'Unit kerja dan subbagian', 'Daftar jabatan yang berlaku di PN Sleman'],
+            'result' => 'Pegawai dapat ditempatkan pada jabatan dan unit kerja yang benar.',
+            'menu' => 'Master data / data awal sistem',
             'route' => null,
         ],
         [
-            'title' => 'Data Pegawai',
+            'title' => 'Input Data Pegawai',
+            'short' => 'Siapa yang dinilai',
             'icon' => 'fa-users',
-            'desc' => 'Mencatat profil pegawai sebagai sumber usia, unit kerja, jabatan, dan masa jabatan.',
-            'items' => ['NIP, nama, tanggal lahir, pendidikan', 'Jabatan dan unit kerja', 'TMT jabatan, promosi terakhir, pelatihan terakhir'],
+            'plain' => 'Masukkan profil pegawai agar sistem bisa membaca usia, masa jabatan, riwayat promosi, dan riwayat pelatihan.',
+            'prepare' => ['NIP, nama, tanggal lahir, jenis kelamin', 'Jabatan saat ini dan unit kerja', 'TMT jabatan, tanggal promosi terakhir, tanggal pelatihan terakhir'],
+            'result' => 'Sistem memiliki bahan untuk menghitung C2, C3, C4, dan C5.',
+            'menu' => 'Data Pegawai',
             'route' => route('employees.index'),
         ],
         [
-            'title' => 'Penilaian Kompetensi',
+            'title' => 'Input Penilaian Kompetensi',
+            'short' => 'Nilai kemampuan kerja',
             'icon' => 'fa-clipboard-check',
-            'desc' => 'Memasukkan capaian kinerja berbasis kompetensi sebagai kriteria C1.',
-            'items' => ['Assessment per pegawai', 'Skor 1 sampai 5 per kriteria', 'Catatan/verifikasi penilaian'],
+            'plain' => 'Atasan atau pengelola SDM memberikan nilai capaian kinerja berbasis kompetensi dengan skala 1 sampai 5.',
+            'prepare' => ['Pilih pegawai', 'Isi nilai setiap kriteria', 'Tambahkan catatan bila ada hal penting'],
+            'result' => 'Sistem memiliki nilai C1 sebagai ukuran capaian kinerja berbasis kompetensi.',
+            'menu' => 'Penilaian',
             'route' => route('assessments.index'),
         ],
         [
-            'title' => 'Perhitungan SAW',
+            'title' => 'Jalankan Analisis SAW',
+            'short' => 'Hitung prioritas',
             'icon' => 'fa-calculator',
-            'desc' => 'Mengubah data pegawai dan assessment menjadi nilai prioritas kebutuhan pelatihan.',
-            'items' => ['Normalisasi benefit dan cost', 'Pembobotan C1 sampai C5', 'Ranking prioritas pelatihan'],
+            'plain' => 'Sistem mengolah semua data dengan metode Simple Additive Weighting untuk membuat ranking kebutuhan pelatihan.',
+            'prepare' => ['C1 dari penilaian kompetensi', 'C2 dari lama tidak mengikuti pelatihan', 'C3 dari masa jabatan', 'C4 dari riwayat promosi', 'C5 dari usia pegawai'],
+            'result' => 'Muncul daftar pegawai dan jenis pelatihan yang diprioritaskan.',
+            'menu' => 'Kebutuhan Pelatihan',
             'route' => route('training-needs.index'),
         ],
         [
-            'title' => 'Rekomendasi dan Laporan',
-            'icon' => 'fa-chart-line',
-            'desc' => 'Menindaklanjuti ranking menjadi rekomendasi pelatihan dan bahan rencana tahunan.',
-            'items' => ['Rekomendasi jenis pelatihan', 'Status persetujuan dan realisasi', 'Laporan rekap dan export'],
+            'title' => 'Tindak Lanjut Rekomendasi',
+            'short' => 'Persetujuan dan rencana',
+            'icon' => 'fa-check-double',
+            'plain' => 'Hasil ranking dapat ditinjau, disetujui, ditolak, atau ditandai selesai sesuai rencana pelatihan.',
+            'prepare' => ['Cek ranking dan skor SAW', 'Baca rekomendasi pelatihan', 'Ubah status sesuai keputusan pimpinan/SDM'],
+            'result' => 'Prioritas pelatihan berubah menjadi rencana tindak lanjut yang bisa dipantau.',
+            'menu' => 'Detail Kebutuhan Pelatihan',
+            'route' => route('training-needs.index'),
+        ],
+        [
+            'title' => 'Cetak Laporan',
+            'short' => 'Bahan keputusan',
+            'icon' => 'fa-file-alt',
+            'plain' => 'Laporan digunakan sebagai rekap kebutuhan pelatihan pegawai, unit kerja, dan bahan penyusunan rencana tahunan.',
+            'prepare' => ['Laporan prioritas pelatihan', 'Status pending, disetujui, selesai, atau ditolak', 'Export CSV atau cetak PDF melalui browser'],
+            'result' => 'Pimpinan dan SDM memiliki dasar objektif untuk menyusun program pelatihan.',
+            'menu' => 'Laporan',
             'route' => route('training-needs.report'),
         ],
     ];
 
     $criteria = [
-        ['code' => 'C1', 'name' => 'Capaian Kinerja Berbasis Kompetensi', 'type' => 'Cost', 'weight' => '33,3%', 'source' => 'Penilaian atasan langsung'],
-        ['code' => 'C2', 'name' => 'Riwayat Pelatihan', 'type' => 'Benefit', 'weight' => '26,7%', 'source' => 'Tanggal pelatihan terakhir'],
-        ['code' => 'C3', 'name' => 'Masa Jabatan Saat Ini', 'type' => 'Benefit', 'weight' => '20,0%', 'source' => 'TMT jabatan'],
-        ['code' => 'C4', 'name' => 'Riwayat Promosi', 'type' => 'Benefit', 'weight' => '13,3%', 'source' => 'Tanggal promosi terakhir'],
-        ['code' => 'C5', 'name' => 'Usia', 'type' => 'Cost', 'weight' => '6,7%', 'source' => 'Tanggal lahir'],
+        ['code' => 'C1', 'name' => 'Capaian Kinerja Berbasis Kompetensi', 'simple' => 'Semakin rendah nilai kompetensi, semakin besar kebutuhan pelatihan.', 'type' => 'Cost', 'weight' => '33,3%', 'source' => 'Penilaian atasan langsung'],
+        ['code' => 'C2', 'name' => 'Riwayat Pelatihan', 'simple' => 'Semakin lama tidak ikut pelatihan, semakin tinggi prioritas.', 'type' => 'Benefit', 'weight' => '26,7%', 'source' => 'Tanggal pelatihan terakhir'],
+        ['code' => 'C3', 'name' => 'Masa Jabatan Saat Ini', 'simple' => 'Semakin lama di jabatan yang sama, semakin perlu penyegaran.', 'type' => 'Benefit', 'weight' => '20,0%', 'source' => 'TMT jabatan'],
+        ['code' => 'C4', 'name' => 'Riwayat Promosi', 'simple' => 'Pegawai yang baru promosi perlu penyesuaian kompetensi.', 'type' => 'Benefit', 'weight' => '13,3%', 'source' => 'Tanggal promosi terakhir'],
+        ['code' => 'C5', 'name' => 'Usia', 'simple' => 'Dipakai sebagai faktor pendukung perencanaan pengembangan.', 'type' => 'Cost', 'weight' => '6,7%', 'source' => 'Tanggal lahir'],
+    ];
+
+    $checklist = [
+        'Semua pegawai sudah memiliki jabatan dan unit kerja.',
+        'Tanggal lahir, TMT jabatan, promosi terakhir, dan pelatihan terakhir sudah diisi bila datanya ada.',
+        'Penilaian kompetensi terbaru sudah dibuat untuk pegawai yang akan dianalisis.',
+        'Analisis SAW sudah dijalankan ulang setelah ada perubahan data.',
+        'Hasil ranking sudah diperiksa sebelum dicetak sebagai laporan.',
     ];
 @endphp
 
-<div class="flow-page">
-    <div class="toolbar-panel mb-4">
-        <div>
-            <h5 class="toolbar-title">Peta Kerja TNA</h5>
-            <p class="toolbar-subtitle">Ikuti urutan ini agar data siap dihitung dengan metode Simple Additive Weighting.</p>
+<div class="system-flow-page">
+    <section class="flow-hero mb-4">
+        <div class="flow-hero-copy">
+            <span class="eyebrow">Panduan untuk pengguna baru</span>
+            <h3>Dari data pegawai menjadi prioritas pelatihan</h3>
+            <p>
+                Halaman ini menjelaskan cara kerja sistem TNA dengan bahasa sederhana. Intinya, sistem mengumpulkan data pegawai,
+                menilai kompetensi, menghitung prioritas dengan SAW, lalu menghasilkan rekomendasi pelatihan.
+            </p>
         </div>
-        <div class="toolbar-actions">
+        <div class="flow-hero-actions">
             <a href="{{ route('employees.create') }}" class="btn btn-primary">
                 <i class="fas fa-user-plus me-2"></i>
-                Input Pegawai
+                Mulai Input Pegawai
             </a>
-            <a href="{{ route('assessments.create') }}" class="btn btn-success">
-                <i class="fas fa-plus me-2"></i>
-                Input Penilaian
+            <a href="{{ route('training-needs.index') }}" class="btn btn-success">
+                <i class="fas fa-calculator me-2"></i>
+                Lihat Analisis
             </a>
         </div>
-    </div>
+    </section>
 
-    <div class="flow-steps mb-4">
-        @foreach($phases as $index => $phase)
-            <div class="flow-step">
-                <div class="step-marker">
-                    <span>{{ $index + 1 }}</span>
-                </div>
-                <div class="step-panel">
-                    <div class="step-head">
-                        <div class="step-icon">
-                            <i class="fas {{ $phase['icon'] }}"></i>
-                        </div>
-                        <div>
-                            <h5>{{ $phase['title'] }}</h5>
-                            <p>{{ $phase['desc'] }}</p>
-                        </div>
-                    </div>
-                    <ul>
-                        @foreach($phase['items'] as $item)
-                            <li>{{ $item }}</li>
-                        @endforeach
-                    </ul>
-                    @if($phase['route'])
-                        <a href="{{ $phase['route'] }}" class="btn btn-outline-primary btn-sm">
-                            Buka Modul
-                            <i class="fas fa-arrow-right ms-2"></i>
-                        </a>
-                    @endif
-                </div>
-            </div>
-        @endforeach
+    <div class="quick-explain mb-4">
+        <div class="explain-card">
+            <i class="fas fa-database"></i>
+            <h6>Data Masuk</h6>
+            <p>Profil pegawai, riwayat pelatihan, masa jabatan, promosi, usia, dan nilai kompetensi.</p>
+        </div>
+        <div class="explain-card">
+            <i class="fas fa-scale-balanced"></i>
+            <h6>Diproses SAW</h6>
+            <p>Setiap kriteria diberi skor, dinormalisasi, lalu dikalikan bobot.</p>
+        </div>
+        <div class="explain-card">
+            <i class="fas fa-ranking-star"></i>
+            <h6>Hasil Keluar</h6>
+            <p>Sistem menampilkan ranking pegawai dan rekomendasi pelatihan prioritas.</p>
+        </div>
     </div>
 
     <div class="row g-4">
-        <div class="col-xl-7">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-weight-hanging me-2"></i>
-                        Kriteria SAW yang Digunakan
-                    </h5>
+        <div class="col-xl-8">
+            <div class="flow-roadmap">
+                @foreach($steps as $index => $step)
+                    <article class="roadmap-step">
+                        <div class="roadmap-number">{{ $index + 1 }}</div>
+                        <div class="roadmap-card">
+                            <div class="roadmap-card-head">
+                                <div class="roadmap-icon">
+                                    <i class="fas {{ $step['icon'] }}"></i>
+                                </div>
+                                <div>
+                                    <span>{{ $step['short'] }}</span>
+                                    <h5>{{ $step['title'] }}</h5>
+                                    <p>{{ $step['plain'] }}</p>
+                                </div>
+                            </div>
+
+                            <div class="roadmap-detail-grid">
+                                <div>
+                                    <h6>Yang perlu disiapkan</h6>
+                                    <ul>
+                                        @foreach($step['prepare'] as $item)
+                                            <li>{{ $item }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h6>Hasil dari tahap ini</h6>
+                                    <p>{{ $step['result'] }}</p>
+                                    <div class="menu-chip">
+                                        <i class="fas fa-location-dot"></i>
+                                        {{ $step['menu'] }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if($step['route'])
+                                <a href="{{ $step['route'] }}" class="btn btn-outline-primary btn-sm">
+                                    Buka Modul
+                                    <i class="fas fa-arrow-right ms-2"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="sticky-guide">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-circle-question me-2"></i>
+                            Istilah Sederhana
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="glossary-item">
+                            <strong>SAW</strong>
+                            <p>Metode untuk menjumlahkan nilai beberapa kriteria yang sudah diberi bobot.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <strong>Benefit</strong>
+                            <p>Semakin besar nilainya, semakin tinggi prioritas.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <strong>Cost</strong>
+                            <p>Dalam sistem ini dipakai untuk membaca kondisi yang perlu perhatian khusus.</p>
+                        </div>
+                        <div class="glossary-item">
+                            <strong>Ranking</strong>
+                            <p>Urutan pegawai dari prioritas pelatihan tertinggi ke terendah.</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Kode</th>
-                                    <th>Kriteria</th>
-                                    <th>Atribut</th>
-                                    <th>Bobot</th>
-                                    <th>Sumber Data</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($criteria as $item)
-                                    <tr>
-                                        <td><span class="criteria-code">{{ $item['code'] }}</span></td>
-                                        <td>{{ $item['name'] }}</td>
-                                        <td>{{ $item['type'] }}</td>
-                                        <td><strong>{{ $item['weight'] }}</strong></td>
-                                        <td>{{ $item['source'] }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i>
+                            Checklist Sebelum Analisis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="checklist">
+                            @foreach($checklist as $item)
+                                <div class="checklist-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>{{ $item }}</span>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="col-xl-5">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list-check me-2"></i>
-                        Urutan Input Data
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="input-order">
-                        @foreach(['Master rumpun jabatan', 'Master unit kerja', 'Master jabatan', 'Master pegawai', 'Riwayat jabatan dan pelatihan', 'Indikator/penilaian kompetensi', 'Master kriteria dan bobot SAW', 'Perhitungan SAW', 'Ranking prioritas', 'Laporan rekomendasi'] as $index => $item)
-                            <div class="input-order-item">
-                                <span>{{ $index + 1 }}</span>
-                                <p>{{ $item }}</p>
-                            </div>
-                        @endforeach
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-weight-hanging me-2"></i>
+                Kriteria Penilaian yang Dipakai Sistem
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="criteria-grid">
+                @foreach($criteria as $item)
+                    <div class="criteria-card">
+                        <div class="criteria-topline">
+                            <span class="criteria-code">{{ $item['code'] }}</span>
+                            <span class="criteria-weight">{{ $item['weight'] }}</span>
+                        </div>
+                        <h6>{{ $item['name'] }}</h6>
+                        <p>{{ $item['simple'] }}</p>
+                        <div class="criteria-meta">
+                            <span>{{ $item['type'] }}</span>
+                            <span>{{ $item['source'] }}</span>
+                        </div>
                     </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    .flow-steps {
+    .system-flow-page {
+        --flow-soft: #f6fbf7;
+    }
+
+    .flow-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        padding: 1.5rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #ffffff 0%, #edf7f0 100%);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .eyebrow {
+        display: inline-flex;
+        margin-bottom: 0.65rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        background: var(--ma-light-yellow);
+        color: #6f4d00;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .flow-hero h3 {
+        margin: 0;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .flow-hero p {
+        margin: 0.65rem 0 0;
+        color: var(--text-muted);
+        max-width: 760px;
+        line-height: 1.65;
+    }
+
+    .flow-hero-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        flex: 0 0 auto;
+    }
+
+    .quick-explain {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .explain-card {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .explain-card i {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: var(--ma-light-green);
+        color: var(--ma-dark-green);
+        margin-bottom: 0.75rem;
+    }
+
+    .explain-card h6,
+    .criteria-card h6 {
+        margin: 0;
+        font-weight: 800;
+    }
+
+    .explain-card p,
+    .criteria-card p,
+    .glossary-item p {
+        margin: 0.4rem 0 0;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .flow-roadmap {
         display: grid;
         gap: 1rem;
     }
 
-    .flow-step {
+    .roadmap-step {
         display: grid;
-        grid-template-columns: 44px 1fr;
+        grid-template-columns: 48px 1fr;
         gap: 1rem;
         position: relative;
     }
 
-    .flow-step:not(:last-child)::before {
+    .roadmap-step:not(:last-child)::before {
         content: '';
         position: absolute;
-        left: 21px;
-        top: 48px;
+        left: 23px;
+        top: 56px;
         bottom: -16px;
         width: 2px;
-        background: var(--line);
+        background: linear-gradient(180deg, var(--ma-green), var(--line));
     }
 
-    .step-marker {
-        width: 44px;
-        height: 44px;
+    .roadmap-number {
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         background: var(--ma-dark-green);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 700;
+        font-weight: 800;
+        box-shadow: var(--shadow-sm);
         position: relative;
         z-index: 1;
     }
 
-    .step-panel {
+    .roadmap-card {
         background: white;
         border: 1px solid var(--line);
-        border-radius: 8px;
+        border-radius: 12px;
         padding: 1rem;
         box-shadow: var(--shadow-sm);
     }
 
-    .step-head {
+    .roadmap-card-head {
         display: flex;
         gap: 1rem;
         align-items: flex-start;
-        margin-bottom: 0.75rem;
+        margin-bottom: 1rem;
     }
 
-    .step-icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 8px;
+    .roadmap-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
         background: var(--ma-light-green);
         color: var(--ma-dark-green);
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         flex: 0 0 auto;
     }
 
-    .step-head h5 {
-        margin: 0;
-        font-weight: 700;
+    .roadmap-card-head span {
+        color: var(--ma-green);
+        font-weight: 800;
+        font-size: 0.82rem;
     }
 
-    .step-head p {
-        margin: 0.2rem 0 0;
+    .roadmap-card-head h5 {
+        margin: 0.15rem 0 0;
+        font-weight: 800;
+    }
+
+    .roadmap-card-head p {
+        margin: 0.35rem 0 0;
         color: var(--text-muted);
+        line-height: 1.55;
     }
 
-    .step-panel ul {
-        margin: 0 0 1rem;
-        padding-left: 1.2rem;
+    .roadmap-detail-grid {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .roadmap-detail-grid h6 {
+        font-weight: 800;
+        margin-bottom: 0.45rem;
+    }
+
+    .roadmap-detail-grid ul {
+        margin: 0;
+        padding-left: 1.1rem;
         color: var(--text-main);
+    }
+
+    .roadmap-detail-grid li {
+        margin-bottom: 0.3rem;
+    }
+
+    .roadmap-detail-grid p {
+        margin: 0;
+        color: var(--text-muted);
+        line-height: 1.55;
+    }
+
+    .menu-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        background: var(--flow-soft);
+        color: var(--ma-dark-green);
+        font-weight: 700;
+        font-size: 0.86rem;
+    }
+
+    .sticky-guide {
+        position: sticky;
+        top: 1rem;
+    }
+
+    .glossary-item:not(:last-child) {
+        padding-bottom: 0.85rem;
+        margin-bottom: 0.85rem;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .checklist {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .checklist-item {
+        display: flex;
+        gap: 0.65rem;
+        align-items: flex-start;
+    }
+
+    .checklist-item i {
+        margin-top: 0.15rem;
+        color: var(--ma-green);
+    }
+
+    .criteria-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .criteria-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1rem;
+        background: var(--surface);
+    }
+
+    .criteria-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
     }
 
     .criteria-code {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
+        min-width: 40px;
         height: 30px;
         border-radius: 8px;
         background: var(--ma-light-yellow);
         color: #6f4d00;
-        font-weight: 700;
+        font-weight: 800;
     }
 
-    .input-order {
+    .criteria-weight {
+        color: var(--ma-dark-green);
+        font-weight: 800;
+    }
+
+    .criteria-meta {
         display: grid;
-        gap: 0.75rem;
+        gap: 0.35rem;
+        margin-top: 0.9rem;
+        color: var(--text-muted);
+        font-size: 0.86rem;
     }
 
-    .input-order-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--surface-muted);
+    @media (max-width: 1199.98px) {
+        .criteria-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
 
-    .input-order-item span {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: var(--ma-green);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        flex: 0 0 auto;
-    }
+    @media (max-width: 991.98px) {
+        .flow-hero,
+        .flow-hero-actions {
+            align-items: stretch;
+            flex-direction: column;
+        }
 
-    .input-order-item p {
-        margin: 0;
-        font-weight: 600;
+        .quick-explain {
+            grid-template-columns: 1fr;
+        }
+
+        .sticky-guide {
+            position: static;
+        }
     }
 
     @media (max-width: 575.98px) {
-        .flow-step {
-            grid-template-columns: 36px 1fr;
+        .flow-hero,
+        .roadmap-card {
+            padding: 1rem;
+        }
+
+        .roadmap-step {
+            grid-template-columns: 38px 1fr;
             gap: 0.75rem;
         }
 
-        .step-marker {
-            width: 36px;
-            height: 36px;
+        .roadmap-number {
+            width: 38px;
+            height: 38px;
         }
 
-        .flow-step:not(:last-child)::before {
-            left: 17px;
-            top: 40px;
+        .roadmap-step:not(:last-child)::before {
+            left: 18px;
+            top: 46px;
+        }
+
+        .roadmap-card-head,
+        .roadmap-detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .roadmap-card-head {
+            flex-direction: column;
+        }
+
+        .criteria-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>
