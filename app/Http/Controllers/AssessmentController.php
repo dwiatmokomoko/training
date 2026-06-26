@@ -12,10 +12,16 @@ class AssessmentController extends Controller
     public function index()
     {
         $assessments = Assessment::with(['employee.position', 'scores.criteria'])
+            ->when(request('employee_id'), function ($query, $employeeId) {
+                $query->where('employee_id', $employeeId);
+            })
             ->orderBy('assessment_date', 'desc')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
+
+        $employees = Employee::orderBy('name')->get();
         
-        return view('assessments.index', compact('assessments'));
+        return view('assessments.index', compact('assessments', 'employees'));
     }
 
     public function create()

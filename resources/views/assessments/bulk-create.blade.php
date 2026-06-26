@@ -58,7 +58,7 @@
                             </h6>
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Berikan nilai untuk semua kriteria dengan skala 1-5 (1 = Sangat Kurang, 5 = Sangat Baik)
+                                Berikan nilai capaian kinerja dengan skala 1-5. Untuk kriteria cost, nilai lebih rendah menunjukkan kebutuhan pelatihan lebih tinggi.
                             </div>
                         </div>
                     </div>
@@ -68,8 +68,10 @@
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-md-4">
-                                    <h6 class="mb-1">{{ $criterion->name }}</h6>
-                                    <small class="text-muted">Bobot: {{ number_format($criterion->weight * 100, 1) }}%</small>
+                                    <h6 class="mb-1">{{ $criterion->code }} - {{ $criterion->name }}</h6>
+                                    <small class="text-muted">
+                                        Bobot: {{ number_format($criterion->weight * 100, 1) }}% · {{ ucfirst($criterion->type) }}
+                                    </small>
                                     @if($criterion->description)
                                         <p class="small text-muted mt-1">{{ $criterion->description }}</p>
                                     @endif

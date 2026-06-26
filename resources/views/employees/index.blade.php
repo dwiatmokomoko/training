@@ -5,20 +5,28 @@
 @section('page-subtitle', 'Manajemen Data Pegawai Pengadilan Negeri Sleman')
 
 @section('content')
-<div class="row mb-3">
-    <div class="col-md-6">
+<div class="toolbar-panel mb-4">
+    <div>
+        <h5 class="toolbar-title">Daftar Pegawai</h5>
+        <p class="toolbar-subtitle">Kelola profil, unit kerja, masa jabatan, dan data pengembangan pegawai.</p>
+    </div>
+    <div class="toolbar-actions">
+        <form action="{{ route('employees.index') }}" method="GET" class="toolbar-search">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="Cari nama, NIP, atau email">
+                @if(request('search'))
+                    <a href="{{ route('employees.index') }}" class="btn btn-outline-secondary" title="Reset pencarian">
+                        <i class="fas fa-times"></i>
+                    </a>
+                @endif
+                <button class="btn btn-outline-primary" type="submit">Cari</button>
+            </div>
+        </form>
         <a href="{{ route('employees.create') }}" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>
             Tambah Pegawai
         </a>
-    </div>
-    <div class="col-md-6">
-        <div class="input-group">
-            <input type="text" class="form-control" placeholder="Cari pegawai..." id="searchEmployee">
-            <button class="btn btn-outline-secondary" type="button">
-                <i class="fas fa-search"></i>
-            </button>
-        </div>
     </div>
 </div>
 
@@ -101,7 +109,19 @@
         <div class="text-center py-4">
             <i class="fas fa-users fa-3x text-muted mb-3"></i>
             <h5 class="text-muted">Belum ada data pegawai</h5>
-            <p class="text-muted">Klik tombol "Tambah Pegawai" untuk menambahkan data pegawai baru.</p>
+            <p class="text-muted">
+                @if(request('search'))
+                    Tidak ada pegawai yang cocok dengan pencarian "{{ request('search') }}".
+                @else
+                    Klik tombol "Tambah Pegawai" untuk menambahkan data pegawai baru.
+                @endif
+            </p>
+            @if(request('search'))
+                <a href="{{ route('employees.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i>
+                    Reset Pencarian
+                </a>
+            @endif
         </div>
         @endif
     </div>

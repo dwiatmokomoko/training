@@ -7,6 +7,7 @@ use App\Http\Controllers\TrainingNeedController;
 use App\Http\Controllers\AssessmentController;
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+Route::view('/alur-sistem', 'system-flow')->name('system-flow');
 Route::post('/run-analysis', [DashboardController::class, 'runAnalysis'])->name('run-analysis');
 
 Route::resource('employees', EmployeeController::class);

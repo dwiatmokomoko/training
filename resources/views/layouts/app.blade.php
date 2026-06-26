@@ -9,35 +9,49 @@
     @livewireStyles
     <style>
         :root {
-            --ma-green: #228B22;
-            --ma-dark-green: #006400;
-            --ma-light-green: #32CD32;
-            --ma-yellow: #FFD700;
-            --ma-dark-yellow: #FFA500;
-            --ma-light-yellow: #FFFF99;
+            --ma-green: #1f7a3a;
+            --ma-dark-green: #11532a;
+            --ma-light-green: #e8f5ec;
+            --ma-yellow: #f2c94c;
+            --ma-dark-yellow: #d89d10;
+            --ma-light-yellow: #fff7d6;
+            --surface: #ffffff;
+            --surface-muted: #f5f7f8;
+            --line: #dfe5e8;
+            --text-main: #1f2933;
+            --text-muted: #667085;
+            --shadow-sm: 0 2px 10px rgba(15, 23, 42, 0.06);
+            --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.10);
+        }
+
+        body {
+            color: var(--text-main);
+            background: var(--surface-muted);
         }
         
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(135deg, var(--ma-green) 0%, var(--ma-dark-green) 100%);
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            background: linear-gradient(180deg, var(--ma-dark-green) 0%, #163f2a 100%);
+            box-shadow: 2px 0 16px rgba(15, 23, 42, 0.14);
+            position: sticky;
+            top: 0;
         }
         
         .sidebar .nav-link {
             color: rgba(255,255,255,0.9);
-            padding: 0.75rem 1rem;
+            padding: 0.8rem 1rem;
             margin: 0.25rem 0;
-            border-radius: 0.5rem;
+            border-radius: 8px;
             transition: all 0.3s;
             border-left: 3px solid transparent;
+            font-weight: 600;
         }
         
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             color: white;
-            background-color: rgba(255,215,0,0.2);
+            background-color: rgba(255,255,255,0.12);
             border-left-color: var(--ma-yellow);
-            transform: translateX(5px);
         }
         
         .sidebar .nav-link i {
@@ -46,33 +60,36 @@
         }
         
         .main-content {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: linear-gradient(180deg, #f7faf8 0%, #eef3f0 100%);
             min-height: 100vh;
         }
         
         .card {
             border: none;
-            border-radius: 1rem;
-            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
             transition: all 0.3s;
         }
         
         .card:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
         
         .card-header {
             background: linear-gradient(135deg, var(--ma-green) 0%, var(--ma-dark-green) 100%);
             color: white;
-            border-radius: 1rem 1rem 0 0 !important;
-            border-bottom: 3px solid var(--ma-yellow);
+            border-radius: 8px 8px 0 0 !important;
+            border-bottom: 2px solid var(--ma-yellow);
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 600;
         }
         
         .btn-primary {
             background: linear-gradient(135deg, var(--ma-green) 0%, var(--ma-dark-green) 100%);
             border: none;
-            border-radius: 0.5rem;
             transition: all 0.3s;
         }
         
@@ -140,9 +157,72 @@
         .header-gradient {
             background: linear-gradient(135deg, var(--ma-green) 0%, var(--ma-dark-green) 100%);
             color: white;
-            padding: 1rem 0;
+            padding: 1.15rem 0;
             margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-            border-radius: 0 0 1rem 1rem;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .toolbar-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .toolbar-title {
+            margin: 0;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .toolbar-subtitle {
+            margin: 0.25rem 0 0;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-search {
+            min-width: min(460px, 100%);
+        }
+
+        .form-control,
+        .form-select,
+        .input-group-text {
+            border-color: var(--line);
+            border-radius: 8px;
+        }
+
+        .input-group > :not(:first-child) {
+            margin-left: -1px;
+        }
+
+        .table {
+            vertical-align: middle;
+        }
+
+        .table thead th {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            letter-spacing: 0;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .table tbody td {
+            border-color: #eef2f3;
         }
         
         .stats-card {
@@ -171,7 +251,67 @@
             border-color: #dc3545;
             color: #721c24;
         }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                min-height: auto;
+                position: relative;
+            }
+
+            .toolbar-panel,
+            .toolbar-actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .toolbar-actions,
+            .toolbar-search {
+                width: 100%;
+            }
+        }
+
+        @media print {
+            .sidebar,
+            .header-gradient,
+            .toolbar-panel,
+            .btn,
+            .action-cell,
+            .card-actions,
+            .modal,
+            .pagination-container,
+            .search-box,
+            .modern-select,
+            .refresh-btn,
+            .export-btn,
+            .print-btn {
+                display: none !important;
+            }
+
+            .col-md-9,
+            .col-lg-10 {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+            }
+
+            .main-content {
+                padding: 0 !important;
+                background: white !important;
+            }
+
+            .card,
+            .modern-table {
+                box-shadow: none !important;
+                border: 1px solid #d7dde0 !important;
+            }
+
+            .card:hover,
+            .table-row:hover {
+                transform: none !important;
+            }
+        }
     </style>
+    @stack('styles')
 </head>
 <body>
     <div class="container-fluid">
@@ -194,6 +334,10 @@
                             <i class="fas fa-tachometer-alt me-2"></i>
                             Dashboard
                         </a>
+                        <a class="nav-link {{ request()->routeIs('system-flow') ? 'active' : '' }}" href="{{ route('system-flow') }}">
+                            <i class="fas fa-route me-2"></i>
+                            Alur Sistem
+                        </a>
                         <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
                             <i class="fas fa-users me-2"></i>
                             Data Pegawai
@@ -202,11 +346,11 @@
                             <i class="fas fa-clipboard-check me-2"></i>
                             Penilaian
                         </a>
-                        <a class="nav-link {{ request()->routeIs('training-needs.*') ? 'active' : '' }}" href="{{ route('training-needs.index') }}">
+                        <a class="nav-link {{ request()->routeIs('training-needs.index', 'training-needs.show') ? 'active' : '' }}" href="{{ route('training-needs.index') }}">
                             <i class="fas fa-graduation-cap me-2"></i>
                             Kebutuhan Pelatihan
                         </a>
-                        <a class="nav-link" href="{{ route('training-needs.report') }}">
+                        <a class="nav-link {{ request()->routeIs('training-needs.report') ? 'active' : '' }}" href="{{ route('training-needs.report') }}">
                             <i class="fas fa-chart-bar me-2"></i>
                             Laporan
                         </a>

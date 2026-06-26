@@ -5,24 +5,24 @@
 @section('page-subtitle', 'Laporan Lengkap Hasil Analisis SAW')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="d-flex gap-2">
-            <button onclick="window.print()" class="btn btn-primary">
-                <i class="fas fa-print me-2"></i>
-                Cetak Laporan
-            </button>
-            <button onclick="exportToExcel()" class="btn btn-success">
-                <i class="fas fa-file-excel me-2"></i>
-                Export Excel
-            </button>
-            <button onclick="exportToPDF()" class="btn btn-danger">
-                <i class="fas fa-file-pdf me-2"></i>
-                Export PDF
-            </button>
-        </div>
+<div class="toolbar-panel mb-4">
+    <div>
+        <h5 class="toolbar-title">Laporan Prioritas Pelatihan</h5>
+        <p class="toolbar-subtitle">Cetak atau export rekap kebutuhan pelatihan hasil analisis SAW.</p>
     </div>
-    <div class="col-md-6 text-end">
+    <div class="toolbar-actions">
+        <button type="button" onclick="window.print()" class="btn btn-primary">
+            <i class="fas fa-print me-2"></i>
+            Cetak Laporan
+        </button>
+        <button type="button" onclick="exportToExcel()" class="btn btn-success">
+            <i class="fas fa-file-excel me-2"></i>
+            Export CSV
+        </button>
+        <button type="button" onclick="exportToPDF()" class="btn btn-danger">
+            <i class="fas fa-file-pdf me-2"></i>
+            Export PDF
+        </button>
         <a href="{{ route('training-needs.index') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-2"></i>
             Kembali
@@ -209,7 +209,7 @@
 /* Report Styles */
 .summary-card {
     background: white;
-    border-radius: 15px;
+    border-radius: 8px;
     padding: 25px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     transition: all 0.3s ease;
@@ -220,14 +220,13 @@
 }
 
 .summary-card:hover {
-    transform: translateY(-5px);
     box-shadow: 0 8px 30px rgba(0,0,0,0.15);
 }
 
 .summary-icon {
     width: 60px;
     height: 60px;
-    border-radius: 15px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -391,12 +390,27 @@ const priorityChart = new Chart(priorityCtx, {
 
 // Export Functions
 function exportToExcel() {
-    // Simple CSV export
-    let csv = 'No,Prioritas,NIP,Nama Pegawai,Jabatan,Jenis Pelatihan,Skor SAW,Status,Tanggal Rekomendasi,Catatan\n';
-    
-    @foreach($trainingNeeds as $index => $need)
-    csv += '{{ $index + 1 }},{{ $need->priority_rank }},"{{ $need->employee->nip }}","{{ $need->employee->name }}","{{ $need->employee->position->name }}","{{ $need->training_type }}",{{ $need->saw_score }},"{{ $need->status }}","{{ $need->recommended_date ? $need->recommended_date->format('d/m/Y') : '-' }}","{{ $need->notes ? str_replace('"', '""', $need->notes) : '-' }}"\n';
-    @endforeach
+    const rows = [
+        ['No', 'Prioritas', 'NIP', 'Nama Pegawai', 'Jabatan', 'Jenis Pelatihan', 'Skor SAW', 'Status', 'Tanggal Rekomendasi', 'Catatan'],
+        @foreach($trainingNeeds as $index => $need)
+            [
+                '{{ $index + 1 }}',
+                '{{ $need->priority_rank }}',
+                @json($need->employee->nip),
+                @json($need->employee->name),
+                @json($need->employee->position->name),
+                @json($need->training_type),
+                '{{ number_format((float) $need->saw_score, 4) }}',
+                @json($need->status),
+                @json($need->recommended_date ? $need->recommended_date->format('d/m/Y') : '-'),
+                @json($need->notes ?: '-')
+            ],
+        @endforeach
+    ];
+
+    const csv = rows
+        .map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(','))
+        .join('\n');
     
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

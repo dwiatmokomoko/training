@@ -257,7 +257,7 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form action="{{ route('training-needs.update', $trainingNeed) }}" method="POST">
+                <form action="{{ route('training-needs.update', $trainingNeed) }}" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
                     @csrf
                     @method('PUT')
                     
@@ -287,24 +287,26 @@
     </div>
 </div>
 
-<div class="row mt-3">
-    <div class="col-12">
-        <div class="d-flex gap-2">
-            @if($trainingNeed->status === 'pending')
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal">
-                <i class="fas fa-check me-2"></i>
-                Setujui
-            </button>
-            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
-                <i class="fas fa-times me-2"></i>
-                Tolak
-            </button>
-            @endif
-            <a href="{{ route('training-needs.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-2"></i>
-                Kembali
-            </a>
-        </div>
+<div class="toolbar-panel mt-4">
+    <div>
+        <h5 class="toolbar-title">Tindak Lanjut</h5>
+        <p class="toolbar-subtitle">Ubah status rekomendasi atau kembali ke daftar prioritas pelatihan.</p>
+    </div>
+    <div class="toolbar-actions">
+        @if($trainingNeed->status === 'pending')
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal">
+            <i class="fas fa-check me-2"></i>
+            Setujui
+        </button>
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+            <i class="fas fa-times me-2"></i>
+            Tolak
+        </button>
+        @endif
+        <a href="{{ route('training-needs.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Kembali
+        </a>
     </div>
 </div>
 
@@ -316,7 +318,7 @@
                 <h5 class="modal-title">Setujui Pelatihan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ route('training-needs.update', $trainingNeed) }}" method="POST">
+            <form action="{{ route('training-needs.update', $trainingNeed) }}" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="status" value="approved">
@@ -344,7 +346,7 @@
                 <h5 class="modal-title">Tolak Pelatihan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ route('training-needs.update', $trainingNeed) }}" method="POST">
+            <form action="{{ route('training-needs.update', $trainingNeed) }}" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="status" value="rejected">
@@ -394,7 +396,7 @@
 .score-breakdown {
     background: #f8f9fa;
     padding: 15px;
-    border-radius: 10px;
+    border-radius: 8px;
 }
 </style>
 @endsection

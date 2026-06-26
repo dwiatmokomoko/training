@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\TrainingNeed;
+use App\Services\SAWService;
 
 class TrainingNeedsList extends Component
 {
@@ -51,6 +52,16 @@ class TrainingNeedsList extends Component
         }
     }
 
+    public function runAnalysis()
+    {
+        $sawService = app(SAWService::class);
+        $results = $sawService->calculateTrainingNeeds();
+        $sawService->saveTrainingNeeds($results);
+
+        session()->flash('success', 'Analisis SAW berhasil dijalankan dan daftar prioritas diperbarui.');
+        $this->resetPage();
+    }
+
     public function render()
     {
         $query = TrainingNeed::with(['employee.position'])
@@ -61,10 +72,12 @@ class TrainingNeedsList extends Component
         }
 
         if ($this->search) {
-            $query->whereHas('employee', function($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('nip', 'like', '%' . $this->search . '%');
-            })->orWhere('training_type', 'like', '%' . $this->search . '%');
+            $query->where(function ($q) {
+                $q->whereHas('employee', function ($employeeQuery) {
+                    $employeeQuery->where('name', 'like', '%' . $this->search . '%')
+                        ->orWhere('nip', 'like', '%' . $this->search . '%');
+                })->orWhere('training_type', 'like', '%' . $this->search . '%');
+            });
         }
 
         $trainingNeeds = $query->paginate(15);

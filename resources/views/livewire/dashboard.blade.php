@@ -1003,6 +1003,26 @@
                 padding: 15px;
             }
         }
+
+        .dashboard-wrapper .stats-card,
+        .dashboard-wrapper .analysis-card,
+        .dashboard-wrapper .criteria-card,
+        .dashboard-wrapper .actions-card,
+        .dashboard-wrapper .info-card,
+        .dashboard-wrapper .criteria-item,
+        .dashboard-wrapper .action-item,
+        .dashboard-wrapper .info-section,
+        .dashboard-wrapper .results-table-container {
+            border-radius: 8px;
+        }
+
+        .dashboard-wrapper .stats-card:hover,
+        .dashboard-wrapper .analysis-card:hover,
+        .dashboard-wrapper .criteria-card:hover,
+        .dashboard-wrapper .actions-card:hover,
+        .dashboard-wrapper .info-card:hover {
+            transform: none;
+        }
     </style>
 
     <script>

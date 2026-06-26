@@ -11,7 +11,17 @@ class EmployeeController extends Controller
 {
     public function index()
     {
-        $employees = Employee::with(['position.jobFamily', 'workUnit'])->paginate(15);
+        $employees = Employee::with(['position.jobFamily', 'workUnit'])
+            ->when(request('search'), function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('nip', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%');
+                });
+            })
+            ->paginate(15)
+            ->withQueryString();
+
         return view('employees.index', compact('employees'));
     }
 

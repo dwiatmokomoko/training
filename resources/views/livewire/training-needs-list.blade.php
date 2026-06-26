@@ -20,18 +20,18 @@
             </select>
         </div>
         <div class="col-lg-2 col-md-6 mb-3">
-            <button wire:click="$refresh" class="btn btn-outline-primary w-100 refresh-btn">
+            <button type="button" wire:click="$refresh" class="btn btn-outline-primary w-100 refresh-btn">
                 <i class="fas fa-sync-alt me-2"></i>
                 Refresh
             </button>
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="d-flex gap-2">
-                <button class="btn btn-success flex-fill export-btn">
+                <button type="button" class="btn btn-success flex-fill export-btn" onclick="exportTrainingNeedsCsv()">
                     <i class="fas fa-download me-2"></i>
                     Export
                 </button>
-                <button class="btn btn-info flex-fill print-btn">
+                <button type="button" class="btn btn-info flex-fill print-btn" onclick="printTrainingNeeds()">
                     <i class="fas fa-print me-2"></i>
                     Print
                 </button>
@@ -265,9 +265,15 @@
                 @endif
             </p>
             @if(!$search && !$statusFilter)
-            <button class="btn btn-primary empty-action">
-                <i class="fas fa-calculator me-2"></i>
-                Jalankan Analisis SAW
+            <button type="button" class="btn btn-primary empty-action" wire:click="runAnalysis" wire:loading.attr="disabled">
+                <span wire:loading.remove wire:target="runAnalysis">
+                    <i class="fas fa-calculator me-2"></i>
+                    Jalankan Analisis SAW
+                </span>
+                <span wire:loading wire:target="runAnalysis">
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Menganalisis...
+                </span>
             </button>
             @endif
         </div>
@@ -791,6 +797,22 @@
                 width: 100%;
             }
         }
+
+        .training-needs-container .training-card,
+        .training-needs-container .modern-table,
+        .training-needs-container .summary-card,
+        .training-needs-container .loading-container,
+        .training-needs-container .empty-state,
+        .training-needs-container .modern-modal,
+        .training-needs-container .employee-info-modal {
+            border-radius: 8px;
+        }
+
+        .training-needs-container .training-card:hover,
+        .training-needs-container .summary-card:hover,
+        .training-needs-container .table-row:hover {
+            transform: none;
+        }
     </style>
 
     <script>
@@ -806,5 +828,37 @@
             modal.hide();
         }
         @endforeach
+
+        function exportTrainingNeedsCsv() {
+            const rows = [['Prioritas', 'NIP', 'Nama Pegawai', 'Jabatan', 'Jenis Pelatihan', 'Skor SAW', 'Status', 'Tanggal Rekomendasi']];
+
+            @foreach($trainingNeeds as $need)
+                rows.push([
+                    '{{ $need->priority_rank }}',
+                    @json($need->employee->nip),
+                    @json($need->employee->name),
+                    @json($need->employee->position->name),
+                    @json($need->training_type),
+                    '{{ number_format((float) $need->saw_score, 4) }}',
+                    @json($need->status),
+                    @json($need->recommended_date ? $need->recommended_date->format('d/m/Y') : '-')
+                ]);
+            @endforeach
+
+            const csv = rows.map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'prioritas-pelatihan-{{ now()->format('Y-m-d') }}.csv';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function printTrainingNeeds() {
+            window.print();
+        }
     </script>
 </div>

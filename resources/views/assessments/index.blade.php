@@ -5,8 +5,12 @@
 @section('page-subtitle', 'Manajemen Penilaian Berdasarkan Kriteria SAW')
 
 @section('content')
-<div class="row mb-3">
-    <div class="col-md-6">
+<div class="toolbar-panel mb-4">
+    <div>
+        <h5 class="toolbar-title">Daftar Penilaian</h5>
+        <p class="toolbar-subtitle">Pantau assessment kompetensi pegawai dan saring berdasarkan nama pegawai.</p>
+    </div>
+    <div class="toolbar-actions">
         <a href="{{ route('assessments.create') }}" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>
             Tambah Penilaian
@@ -15,19 +19,27 @@
             <i class="fas fa-layer-group me-2"></i>
             Penilaian Bulk
         </a>
-    </div>
-    <div class="col-md-6">
-        <div class="input-group">
-            <select class="form-select" id="filterEmployee">
+        <form action="{{ route('assessments.index') }}" method="GET" class="toolbar-search">
+            <div class="input-group">
+            <select class="form-select" id="filterEmployee" name="employee_id">
                 <option value="">Semua Pegawai</option>
-                @foreach(\App\Models\Employee::all() as $emp)
-                    <option value="{{ $emp->id }}">{{ $emp->name }}</option>
+                @foreach($employees as $emp)
+                    <option value="{{ $emp->id }}" {{ (string) request('employee_id') === (string) $emp->id ? 'selected' : '' }}>
+                        {{ $emp->name }}
+                    </option>
                 @endforeach
             </select>
-            <button class="btn btn-outline-secondary" type="button">
-                <i class="fas fa-filter"></i>
+            @if(request('employee_id'))
+                <a href="{{ route('assessments.index') }}" class="btn btn-outline-secondary" title="Reset filter">
+                    <i class="fas fa-times"></i>
+                </a>
+            @endif
+            <button class="btn btn-outline-primary" type="submit">
+                <i class="fas fa-filter me-2"></i>
+                Terapkan
             </button>
-        </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -119,7 +131,19 @@
         <div class="text-center py-4">
             <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
             <h5 class="text-muted">Belum ada data penilaian</h5>
-            <p class="text-muted">Klik tombol "Tambah Penilaian" untuk menambahkan penilaian pegawai.</p>
+            <p class="text-muted">
+                @if(request('employee_id'))
+                    Belum ada penilaian untuk pegawai yang dipilih.
+                @else
+                    Klik tombol "Tambah Penilaian" untuk menambahkan penilaian pegawai.
+                @endif
+            </p>
+            @if(request('employee_id'))
+                <a href="{{ route('assessments.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i>
+                    Reset Filter
+                </a>
+            @endif
         </div>
         @endif
     </div>
@@ -154,7 +178,7 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h4 class="text-warning">{{ \App\Models\Criteria::count() }}</h4>
+                <h4 class="text-warning">{{ \App\Models\Criteria::latestTna()->count() }}</h4>
                 <small class="text-muted">Kriteria Aktif</small>
             </div>
         </div>
