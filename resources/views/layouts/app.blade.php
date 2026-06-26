@@ -290,6 +290,150 @@
         .table tbody td {
             border-color: #eef2f3;
         }
+
+        .module-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            background: #ffffff;
+            border: 1px solid var(--line);
+            border-left: 5px solid var(--ma-green);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .module-hero h3,
+        .section-title {
+            margin: 0;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .module-hero p,
+        .section-subtitle {
+            margin: 0.45rem 0 0;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .module-hero-icon {
+            width: 68px;
+            height: 68px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: var(--ma-dark-green);
+            background: var(--ma-light-green);
+            font-size: 1.6rem;
+            flex: 0 0 auto;
+        }
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .module-grid.two {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .module-card {
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: var(--shadow-sm);
+            height: 100%;
+        }
+
+        .module-card-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .module-card-icon {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: var(--ma-dark-green);
+            background: var(--ma-light-yellow);
+            flex: 0 0 auto;
+        }
+
+        .module-card h6 {
+            margin: 0;
+            font-weight: 800;
+        }
+
+        .module-card p {
+            margin: 0.25rem 0 0;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .feature-list {
+            display: grid;
+            gap: 0.55rem;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .feature-list li {
+            display: flex;
+            gap: 0.55rem;
+            align-items: flex-start;
+            color: var(--text-main);
+        }
+
+        .feature-list i {
+            margin-top: 0.15rem;
+            color: var(--ma-green);
+        }
+
+        .soft-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .soft-table th,
+        .soft-table td {
+            padding: 0.85rem;
+            border-bottom: 1px solid #edf1f2;
+            vertical-align: top;
+        }
+
+        .soft-table th {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0;
+            background: #f8faf9;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.28rem 0.58rem;
+            border-radius: 999px;
+            background: var(--ma-light-green);
+            color: var(--ma-dark-green);
+            font-size: 0.84rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
         
         .stats-card {
             background: white;
@@ -359,6 +503,15 @@
             .toolbar-actions,
             .toolbar-search {
                 width: 100%;
+            }
+
+            .module-hero {
+                flex-direction: column;
+            }
+
+            .module-grid,
+            .module-grid.two {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -430,25 +583,45 @@
                         <i class="fas fa-tachometer-alt me-2"></i>
                         Dashboard
                     </a>
-                    <a class="nav-link {{ request()->routeIs('system-flow') ? 'active' : '' }}" href="{{ route('system-flow') }}">
-                        <i class="fas fa-route me-2"></i>
-                        Alur Sistem
+                    <a class="nav-link {{ request()->routeIs('users-management') ? 'active' : '' }}" href="{{ route('users-management') }}">
+                        <i class="fas fa-user-shield me-2"></i>
+                        Manajemen Pengguna
                     </a>
                     <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
                         <i class="fas fa-users me-2"></i>
                         Data Pegawai
                     </a>
-                    <a class="nav-link {{ request()->routeIs('assessments.*') ? 'active' : '' }}" href="{{ route('assessments.index') }}">
+                    <a class="nav-link {{ request()->routeIs('positions-competencies') ? 'active' : '' }}" href="{{ route('positions-competencies') }}">
+                        <i class="fas fa-sitemap me-2"></i>
+                        Jabatan & Kompetensi
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('performance', 'assessments.*') ? 'active' : '' }}" href="{{ route('performance') }}">
                         <i class="fas fa-clipboard-check me-2"></i>
-                        Penilaian
+                        Penilaian Kinerja
                     </a>
                     <a class="nav-link {{ request()->routeIs('training-needs.index', 'training-needs.show') ? 'active' : '' }}" href="{{ route('training-needs.index') }}">
+                        <i class="fas fa-magnifying-glass-chart me-2"></i>
+                        Analisis TNA
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('training-recommendations') ? 'active' : '' }}" href="{{ route('training-recommendations') }}">
                         <i class="fas fa-graduation-cap me-2"></i>
-                        Kebutuhan Pelatihan
+                        Rekomendasi Pelatihan
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('training-plans') ? 'active' : '' }}" href="{{ route('training-plans') }}">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        Perencanaan Pelatihan
                     </a>
                     <a class="nav-link {{ request()->routeIs('training-needs.report') ? 'active' : '' }}" href="{{ route('training-needs.report') }}">
                         <i class="fas fa-chart-bar me-2"></i>
                         Laporan
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('master-data') ? 'active' : '' }}" href="{{ route('master-data') }}">
+                        <i class="fas fa-database me-2"></i>
+                        Master Data
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('system-flow') ? 'active' : '' }}" href="{{ route('system-flow') }}">
+                        <i class="fas fa-route me-2"></i>
+                        Alur Sistem
                     </a>
                 </nav>
             </div>

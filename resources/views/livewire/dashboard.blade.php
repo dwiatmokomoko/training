@@ -66,6 +66,67 @@
         </div>
     </div>
 
+    <div class="row g-4 mb-5">
+        <div class="col-xl-7">
+            <div class="analysis-card h-100">
+                <div class="card-header-modern">
+                    <div class="header-content">
+                        <div class="header-icon"><i class="fas fa-chart-column"></i></div>
+                        <div class="header-text">
+                            <h5 class="header-title">Ringkasan Level Kompetensi</h5>
+                            <p class="header-subtitle">Jumlah pegawai berdasarkan hasil assessment</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body-modern">
+                    <div class="level-grid">
+                        @foreach($competencyLevels as $level)
+                            <div class="level-item">
+                                <div class="level-topline">
+                                    <strong>{{ $level['label'] }}</strong>
+                                    <span>{{ $level['count'] }}</span>
+                                </div>
+                                <div class="level-bar">
+                                    <div style="width: {{ max(8, min(100, $stats['total_assessments'] ? ($level['count'] / max($stats['total_assessments'], 1)) * 100 : 8)) }}%"></div>
+                                </div>
+                                <small>{{ $level['hint'] }}</small>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-5">
+            <div class="actions-card h-100">
+                <div class="card-header-modern">
+                    <div class="header-content">
+                        <div class="header-icon"><i class="fas fa-bell"></i></div>
+                        <div class="header-text">
+                            <h5 class="header-title">Notifikasi TNA</h5>
+                            <p class="header-subtitle">Hal yang perlu ditindaklanjuti</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body-modern">
+                    <div class="notification-list">
+                        @foreach($notifications as $notification)
+                            <a href="{{ $notification['route'] }}" class="notification-item">
+                                <div class="action-icon assessments">
+                                    <i class="fas {{ $notification['icon'] }}"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h6 class="action-title">{{ $notification['label'] }}</h6>
+                                    <p class="action-desc">{{ $notification['count'] }} data</p>
+                                </div>
+                                <div class="action-arrow"><i class="fas fa-chevron-right"></i></div>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content Row -->
     <div class="row g-4">
         <!-- SAW Analysis Section -->
@@ -230,7 +291,7 @@
                                     <span class="criteria-weight">{{ number_format($criteria['weight'] * 100, 1) }}%</span>
                                 </div>
                                 <small class="text-muted">
-                                    {{ ucfirst($criteria['type']) }} · Rating {{ $criteria['importance_rating'] ?? '-' }}
+                                    {{ ucfirst($criteria['type']) }} - Rating {{ $criteria['importance_rating'] ?? '-' }}
                                 </small>
                                 <div class="criteria-bar">
                                     <div class="criteria-fill" style="width: {{ $criteria['weight'] * 100 }}%"></div>
@@ -805,7 +866,13 @@
             gap: 15px;
         }
 
-        .action-item {
+        .notification-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .action-item,
+        .notification-item {
             display: flex;
             align-items: center;
             gap: 15px;
@@ -816,10 +883,53 @@
             transition: all 0.3s ease;
         }
 
-        .action-item:hover {
+        .action-item:hover,
+        .notification-item:hover {
             background: #e9ecef;
             transform: translateX(5px);
             text-decoration: none;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .level-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .level-topline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .level-topline span {
+            color: var(--ma-dark-green);
+            font-weight: 800;
+        }
+
+        .level-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .level-bar div {
+            height: 100%;
+            background: linear-gradient(90deg, var(--ma-green), var(--ma-yellow));
+        }
+
+        .level-item small {
+            color: #6c757d;
         }
 
         .action-icon {
@@ -962,6 +1072,10 @@
             .card-body-modern {
                 padding: 20px;
             }
+
+            .level-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
             
             .results-table-container {
                 padding: 15px;
@@ -999,8 +1113,12 @@
                 text-align: center;
             }
             
-            .criteria-item, .action-item, .info-section {
+            .criteria-item, .action-item, .notification-item, .info-section {
                 padding: 15px;
+            }
+
+            .level-grid {
+                grid-template-columns: 1fr;
             }
         }
 

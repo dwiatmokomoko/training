@@ -30,6 +30,21 @@
     </div>
 </div>
 
+<div class="module-card mb-4">
+    <div class="module-card-head">
+        <div class="module-card-icon"><i class="fas fa-file-excel"></i></div>
+        <div>
+            <h6>Rujukan Format Data Pegawai PN Sleman</h6>
+            <p>Halaman ini disesuaikan dengan file data pegawai: NIP, nama, jabatan, unit kerja, TMT jabatan, golongan, jenis kelamin, dan rumpun jabatan. NIP juga dapat menjadi dasar tanggal lahir untuk perhitungan usia pada C5 bila data lahir belum tersedia.</p>
+        </div>
+    </div>
+    <div>
+        @foreach(['NIP', 'Nama pegawai', 'Jabatan', 'Unit kerja', 'TMT jabatan', 'Golongan', 'Jenis kelamin', 'Rumpun'] as $column)
+            <span class="pill me-1 mb-1">{{ $column }}</span>
+        @endforeach
+    </div>
+</div>
+
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0">

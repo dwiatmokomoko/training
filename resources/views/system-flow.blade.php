@@ -77,6 +77,37 @@
         ['code' => 'C5', 'name' => 'Usia', 'simple' => 'Dipakai sebagai faktor pendukung perencanaan pengembangan.', 'type' => 'Cost', 'weight' => '6,7%', 'source' => 'Tanggal lahir'],
     ];
 
+    $modules = [
+        ['menu' => 'Dashboard', 'plain' => 'Ringkasan gap kompetensi, pegawai per level, prioritas pelatihan, status rencana/realisasi, dan notifikasi.', 'route' => route('dashboard'), 'icon' => 'fa-tachometer-alt'],
+        ['menu' => 'Manajemen Pengguna', 'plain' => 'Akun pegawai, atasan, SDM, pimpinan, role RBAC, aktivasi, reset password, dan audit log.', 'route' => route('users-management'), 'icon' => 'fa-user-shield'],
+        ['menu' => 'Data Pegawai', 'plain' => 'Profil NIP/NIK, jabatan, unit kerja, riwayat jabatan, pendidikan, pelatihan, dan dokumen pendukung.', 'route' => route('employees.index'), 'icon' => 'fa-users'],
+        ['menu' => 'Jabatan & Standar Kompetensi', 'plain' => 'Master jabatan, kompetensi inti/manajerial/teknis/sosial kultural, level 1-5, dan bobot.', 'route' => route('positions-competencies'), 'icon' => 'fa-sitemap'],
+        ['menu' => 'Penilaian Kinerja', 'plain' => 'Input nilai SKP, IKU, KPI, indikator per rumpun, dan pembobotan kinerja terhadap TNA.', 'route' => route('performance'), 'icon' => 'fa-clipboard-check'],
+        ['menu' => 'Analisis TNA', 'plain' => 'Perbandingan kompetensi aktual vs standar, gap otomatis, klasifikasi wajib/prioritas/pengembangan, dan pemetaan individu/unit.', 'route' => route('training-needs.index'), 'icon' => 'fa-magnifying-glass-chart'],
+        ['menu' => 'Rekomendasi Pelatihan', 'plain' => 'Jenis pelatihan, metode klasikal/e-learning/coaching, target peserta, estimasi waktu, urgensi, dan mapping gap.', 'route' => route('training-recommendations'), 'icon' => 'fa-graduation-cap'],
+        ['menu' => 'Perencanaan Pelatihan', 'plain' => 'Rencana tahunan, jadwal kegiatan, peserta, estimasi anggaran, dan approval workflow pimpinan.', 'route' => route('training-plans'), 'icon' => 'fa-calendar-check'],
+        ['menu' => 'Laporan', 'plain' => 'Laporan TNA per pegawai, jabatan/unit, rekap gap, rencana vs realisasi, export PDF/Excel.', 'route' => route('training-needs.report'), 'icon' => 'fa-chart-bar'],
+        ['menu' => 'Master Data', 'plain' => 'Jenis kompetensi, level kompetensi, jenis pelatihan, metode pelatihan, dan tahun anggaran.', 'route' => route('master-data'), 'icon' => 'fa-database'],
+    ];
+
+    $importOrder = [
+        'Master Rumpun Jabatan',
+        'Master Unit Kerja',
+        'Master Jabatan',
+        'Master Pegawai',
+        'Riwayat Jabatan',
+        'Master Pelatihan',
+        'Riwayat Pelatihan Pegawai',
+        'Indikator Kinerja per Rumpun',
+        'Periode Penilaian',
+        'Penilaian Capaian Kinerja',
+        'Master Kriteria SAW',
+        'Bobot Kriteria',
+        'Perhitungan SAW',
+        'Ranking Prioritas Pelatihan',
+        'Laporan dan Rekomendasi Pelatihan',
+    ];
+
     $checklist = [
         'Semua pegawai sudah memiliki jabatan dan unit kerja.',
         'Tanggal lahir, TMT jabatan, promosi terakhir, dan pelatihan terakhir sudah diisi bila datanya ada.',
@@ -123,6 +154,35 @@
             <i class="fas fa-ranking-star"></i>
             <h6>Hasil Keluar</h6>
             <p>Sistem menampilkan ranking pegawai dan rekomendasi pelatihan prioritas.</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-table-columns me-2"></i>
+                10 Menu Utama Sesuai Rancangan
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="module-grid two">
+                @foreach($modules as $index => $module)
+                    <div class="module-card">
+                        <div class="module-card-head">
+                            <div class="module-card-icon"><i class="fas {{ $module['icon'] }}"></i></div>
+                            <div>
+                                <span class="pill mb-2">{{ $index + 1 }}</span>
+                                <h6>{{ $module['menu'] }}</h6>
+                                <p>{{ $module['plain'] }}</p>
+                            </div>
+                        </div>
+                        <a href="{{ $module['route'] }}" class="btn btn-outline-primary btn-sm">
+                            Buka Menu
+                            <i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                @endforeach
+            </div>
         </div>
     </div>
 
@@ -247,6 +307,28 @@
                             <span>{{ $item['type'] }}</span>
                             <span>{{ $item['source'] }}</span>
                         </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-file-import me-2"></i>
+                Urutan Data Masuk sampai Laporan
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="section-subtitle mb-3">
+                Urutan ini mengikuti template import database TNA SAW PN Sleman. Pengguna awam cukup membacanya sebagai tangga kerja: data organisasi dulu, pegawai dan riwayatnya, penilaian, baru perhitungan SAW dan laporan.
+            </p>
+            <div class="import-flow">
+                @foreach($importOrder as $index => $item)
+                    <div class="import-step">
+                        <span>{{ $index + 1 }}</span>
+                        <strong>{{ $item }}</strong>
                     </div>
                 @endforeach
             </div>
@@ -538,9 +620,47 @@
         font-size: 0.86rem;
     }
 
+    .import-flow {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .import-step {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+    }
+
+    .import-step span {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: var(--ma-light-green);
+        color: var(--ma-dark-green);
+        font-weight: 800;
+        flex: 0 0 auto;
+    }
+
+    .import-step strong {
+        font-size: 0.92rem;
+        line-height: 1.3;
+    }
+
     @media (max-width: 1199.98px) {
         .criteria-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .import-flow {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
     }
 
@@ -557,6 +677,10 @@
 
         .sticky-guide {
             position: static;
+        }
+
+        .import-flow {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 
@@ -591,6 +715,10 @@
         }
 
         .criteria-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .import-flow {
             grid-template-columns: 1fr;
         }
     }

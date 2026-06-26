@@ -68,4 +68,31 @@ class TrainingNeedController extends Controller
 
         return view('training-needs.report', compact('trainingNeeds', 'summary'));
     }
+
+    public function recommendations()
+    {
+        $trainingNeeds = TrainingNeed::with(['employee.position.jobFamily', 'employee.workUnit'])
+            ->orderBy('priority_rank')
+            ->get();
+
+        $groupedByTraining = $trainingNeeds
+            ->groupBy('training_type')
+            ->map(fn ($items) => [
+                'total' => $items->count(),
+                'top_rank' => $items->min('priority_rank'),
+                'avg_score' => $items->avg('saw_score'),
+                'families' => $items->pluck('employee.position.jobFamily.name')->filter()->unique()->values(),
+                'participants' => $items->take(5),
+            ])
+            ->sortBy('top_rank');
+
+        $summary = [
+            'total_recommendations' => $trainingNeeds->count(),
+            'training_types' => $groupedByTraining->count(),
+            'priority_participants' => $trainingNeeds->where('priority_rank', '<=', 10)->pluck('employee_id')->unique()->count(),
+            'urgent' => $trainingNeeds->filter(fn ($need) => str_contains((string) $need->notes, 'Mendesak'))->count(),
+        ];
+
+        return view('training-recommendations', compact('trainingNeeds', 'groupedByTraining', 'summary'));
+    }
 }

@@ -237,12 +237,25 @@ class SAWService
         if ($familyCode === 'HK' || str_contains($positionName, 'hakim')) {
             $recommendations[] = 'Pelatihan Teknis Yudisial';
             $recommendations[] = 'Bimbingan Teknis Penyusunan Putusan';
+            $recommendations[] = 'Sertifikasi Hakim Mediator atau Sertifikasi Teknis Khusus';
+        } elseif (str_contains($positionName, 'jurusita') || str_contains($positionName, 'juru sita')) {
+            $recommendations[] = 'Pelatihan Teknis Pemanggilan dan Pemberitahuan';
+            $recommendations[] = 'Pelatihan e-Court dan e-Summons';
+            $recommendations[] = 'Sertifikasi Jurusita/Jurusita Pengganti';
         } elseif ($familyCode === 'KP' || str_contains($positionName, 'panitera')) {
             $recommendations[] = 'Pelatihan Administrasi Peradilan';
             $recommendations[] = 'Bimbingan Teknis SIPP dan E-Court';
+            $recommendations[] = 'Pelatihan Minutasi dan Arsip Perkara';
+        } elseif (str_contains($positionName, 'keuangan')) {
+            $recommendations[] = 'Pelatihan SAKTI, DIPA, dan Pengelolaan APBN';
+            $recommendations[] = 'Pelatihan Evaluasi Kinerja Anggaran IKPA';
+        } elseif (str_contains($positionName, 'komputer') || str_contains($positionName, 'data')) {
+            $recommendations[] = 'Pelatihan Teknologi Informasi dan Pengelolaan Data';
+            $recommendations[] = 'Pelatihan Aplikasi Kerja dan Pelaporan';
         } else {
             $recommendations[] = 'Pelatihan Administrasi Kesekretariatan';
             $recommendations[] = 'Pelatihan Aplikasi Kerja dan Layanan Internal';
+            $recommendations[] = 'Pelatihan Reformasi Birokrasi dan Zona Integritas';
         }
 
         if ($sawScore >= 0.75) {
