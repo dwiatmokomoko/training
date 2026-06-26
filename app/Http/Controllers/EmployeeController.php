@@ -19,8 +19,8 @@ class EmployeeController extends Controller
                         ->orWhere('email', 'like', '%' . $search . '%');
                 });
             })
-            ->paginate(15)
-            ->withQueryString();
+            ->orderBy('name')
+            ->get();
 
         return view('employees.index', compact('employees'));
     }

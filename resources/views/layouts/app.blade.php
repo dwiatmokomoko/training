@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Sistem Analisa Kebutuhan Pelatihan - Mahkamah Agung')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     @livewireStyles
     <style>
@@ -27,6 +28,7 @@
         body {
             color: var(--text-main);
             background: var(--surface-muted);
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
         
         .app-shell {
@@ -100,7 +102,9 @@
         }
         
         .main-content {
-            background: linear-gradient(180deg, #f7faf8 0%, #eef3f0 100%);
+            background:
+                radial-gradient(circle at top left, rgba(31, 122, 58, 0.08), transparent 32rem),
+                linear-gradient(180deg, #f8fafc 0%, #eef4f0 100%);
             min-height: 100vh;
         }
         
@@ -195,11 +199,14 @@
         }
         
         .header-gradient {
-            background: linear-gradient(135deg, var(--ma-green) 0%, var(--ma-dark-green) 100%);
+            background:
+                linear-gradient(135deg, rgba(17, 83, 42, 0.96) 0%, rgba(31, 122, 58, 0.96) 100%),
+                radial-gradient(circle at 15% 20%, rgba(242, 201, 76, 0.35), transparent 20rem);
             color: white;
-            padding: 1.15rem 0;
+            padding: 1.25rem 0;
             margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-            border-radius: 0 0 8px 8px;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
         }
 
         .sidebar-toggle {
@@ -422,6 +429,58 @@
             background: #f8faf9;
         }
 
+        .data-table-shell {
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            padding: 0.75rem;
+        }
+
+        .js-data-table {
+            width: 100% !important;
+        }
+
+        .dt-container {
+            color: var(--text-main);
+            font-size: 0.94rem;
+        }
+
+        .dt-container .dt-layout-row {
+            margin: 0.35rem 0 0.85rem;
+            gap: 0.75rem;
+        }
+
+        .dt-container .dt-search input,
+        .dt-container .dt-length select {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0.45rem 0.7rem;
+            outline: none;
+        }
+
+        .dt-container .dt-search input:focus,
+        .dt-container .dt-length select:focus {
+            border-color: var(--ma-green);
+            box-shadow: 0 0 0 3px rgba(31, 122, 58, 0.12);
+        }
+
+        .dt-container .dt-paging .dt-paging-button {
+            border: 1px solid var(--line) !important;
+            border-radius: 8px !important;
+            padding: 0.35rem 0.65rem !important;
+            margin: 0 0.12rem;
+            color: var(--text-main) !important;
+            background: white !important;
+        }
+
+        .dt-container .dt-paging .dt-paging-button.current,
+        .dt-container .dt-paging .dt-paging-button:hover {
+            background: var(--ma-green) !important;
+            color: white !important;
+            border-color: var(--ma-green) !important;
+        }
+
         .pill {
             display: inline-flex;
             align-items: center;
@@ -560,8 +619,8 @@
     </style>
     @stack('styles')
 </head>
-<body>
-    <div class="app-shell">
+<body class="bg-slate-100 text-slate-900 antialiased">
+    <div class="app-shell min-h-screen">
         <div class="sidebar-overlay" data-sidebar-close></div>
         <aside class="sidebar-shell">
             <div class="sidebar p-3">
@@ -628,7 +687,7 @@
         </aside>
 
         <main class="content-shell">
-            <div class="main-content p-4">
+            <div class="main-content min-h-screen p-4 lg:p-6">
                 <!-- Header -->
                 <div class="header-gradient">
                     <div class="container-fluid">
@@ -638,7 +697,7 @@
                                     <i class="fas fa-bars"></i>
                                 </button>
                                 <div>
-                                    <h2 class="mb-0">@yield('page-title', 'Dashboard')</h2>
+                                    <h2 class="mb-0 text-2xl fw-bold tracking-tight">@yield('page-title', 'Dashboard')</h2>
                                     <small class="opacity-75">@yield('page-subtitle', 'Sistem Analisa Kebutuhan Pelatihan')</small>
                                 </div>
                             </div>
@@ -715,6 +774,7 @@
                 body.classList.remove('sidebar-collapsed');
                 applyStoredState();
             });
+
         })();
     </script>
     @stack('scripts')

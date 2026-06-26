@@ -93,7 +93,7 @@
     </div>
     <div class="card-body table-responsive">
         @if($groupedByTraining->count())
-            <table class="soft-table">
+            <table class="soft-table js-data-table" data-page-length="10" data-order="[[3,&quot;desc&quot;]]">
                 <thead>
                     <tr>
                         <th>Jenis Pelatihan</th>

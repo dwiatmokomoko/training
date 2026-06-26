@@ -9,3 +9,29 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+@layer components {
+    .tw-surface {
+        @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    }
+
+    .tw-stat {
+        @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition;
+    }
+
+    .tw-stat:hover {
+        @apply shadow-md;
+    }
+
+    .tw-section-title {
+        @apply text-lg font-bold tracking-tight text-slate-900;
+    }
+
+    .tw-muted {
+        @apply text-sm leading-6 text-slate-500;
+    }
+
+    .tw-chip {
+        @apply inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100;
+    }
+}

@@ -54,8 +54,8 @@
     </div>
     <div class="card-body">
         @if($employees->count() > 0)
-        <div class="table-responsive">
-            <table class="table table-hover">
+        <div class="table-responsive data-table-shell">
+            <table class="table table-hover align-middle js-data-table" data-page-length="10" data-order="[[1,&quot;asc&quot;]]">
                 <thead>
                     <tr>
                         <th>NIP</th>
@@ -116,10 +116,6 @@
             </table>
         </div>
 
-        <!-- Pagination -->
-        <div class="d-flex justify-content-center mt-3">
-            {{ $employees->links() }}
-        </div>
         @else
         <div class="text-center py-4">
             <i class="fas fa-users fa-3x text-muted mb-3"></i>
@@ -147,7 +143,7 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h4 class="text-primary">{{ $employees->total() }}</h4>
+                <h4 class="text-primary">{{ $employees->count() }}</h4>
                 <small class="text-muted">Total Pegawai</small>
             </div>
         </div>

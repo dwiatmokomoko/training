@@ -121,8 +121,8 @@
         </h5>
     </div>
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped table-hover" id="reportTable">
+        <div class="table-responsive data-table-shell">
+            <table class="table table-striped table-hover js-data-table" id="reportTable" data-page-length="25" data-order="[[1,&quot;asc&quot;]]">
                 <thead class="table-dark">
                     <tr>
                         <th>No</th>
