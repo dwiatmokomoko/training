@@ -6,11 +6,14 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\WorkUnit;
+use App\Support\Access;
 
 class EmployeeController extends Controller
 {
     public function index()
     {
+        Access::denyIfCannotAny(['employees.view', 'employees.manage']);
+
         $employees = Employee::with(['position.jobFamily', 'workUnit'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -27,6 +30,8 @@ class EmployeeController extends Controller
 
     public function create()
     {
+        Access::denyIfCannot('employees.manage');
+
         $positions = Position::with('jobFamily')->get();
         $workUnits = WorkUnit::with('parent')->orderBy('parent_id')->orderBy('name')->get();
         return view('employees.create', compact('positions', 'workUnits'));
@@ -34,6 +39,8 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
+        Access::denyIfCannot('employees.manage');
+
         $request->validate([
             'nip' => 'required|unique:employees',
             'name' => 'required|string|max:255',
@@ -59,12 +66,23 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        $employee->load(['position.jobFamily', 'workUnit.parent', 'assessments.scores.criteria', 'trainingNeeds']);
+        Access::denyIfCannotAny(['employees.view', 'employees.manage']);
+
+        $employee->load([
+            'position.jobFamily',
+            'workUnit.parent',
+            'assessments.scores.criteria',
+            'trainingNeeds',
+            'trainingHistories.creator',
+        ]);
+
         return view('employees.show', compact('employee'));
     }
 
     public function edit(Employee $employee)
     {
+        Access::denyIfCannot('employees.manage');
+
         $positions = Position::with('jobFamily')->get();
         $workUnits = WorkUnit::with('parent')->orderBy('parent_id')->orderBy('name')->get();
         return view('employees.edit', compact('employee', 'positions', 'workUnits'));
@@ -72,6 +90,8 @@ class EmployeeController extends Controller
 
     public function update(Request $request, Employee $employee)
     {
+        Access::denyIfCannot('employees.manage');
+
         $request->validate([
             'nip' => 'required|unique:employees,nip,' . $employee->id,
             'name' => 'required|string|max:255',
@@ -97,6 +117,8 @@ class EmployeeController extends Controller
 
     public function destroy(Employee $employee)
     {
+        Access::denyIfCannot('employees.manage');
+
         $employee->delete();
 
         return redirect()->route('employees.index')

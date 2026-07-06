@@ -8,6 +8,7 @@ use App\Models\TrainingNeed;
 use App\Models\Assessment;
 use App\Models\Criteria;
 use App\Services\SAWService;
+use App\Support\Access;
 
 class Dashboard extends Component
 {
@@ -57,30 +58,42 @@ class Dashboard extends Component
             ['label' => 'Level 5', 'count' => $assessments->where('total_score', '>=', 4)->count(), 'hint' => 'Mahir'],
         ];
 
-        $this->notifications = [
-            [
+        $notifications = [];
+
+        if (Access::allows('assessments.manage')) {
+            $notifications[] = [
                 'label' => 'Belum isi assessment',
                 'count' => $this->stats['unassessed_employees'],
                 'icon' => 'fa-bell',
                 'route' => route('performance'),
-            ],
-            [
+            ];
+        }
+
+        if (Access::allows('training-needs.manage')) {
+            $notifications[] = [
                 'label' => 'Menunggu persetujuan pelatihan',
                 'count' => $this->stats['pending_training'],
                 'icon' => 'fa-clock',
                 'route' => route('training-plans'),
-            ],
-            [
+            ];
+        }
+
+        if (Access::allows('training-needs.view') || Access::allows('training-needs.manage')) {
+            $notifications[] = [
                 'label' => 'Rencana sudah disetujui',
                 'count' => $this->stats['approved_training'],
                 'icon' => 'fa-check-double',
                 'route' => route('training-needs.index'),
-            ],
-        ];
+            ];
+        }
+
+        $this->notifications = $notifications;
     }
 
     public function runAnalysis()
     {
+        Access::denyIfCannot('analysis.run');
+
         $this->isAnalyzing = true;
         
         try {

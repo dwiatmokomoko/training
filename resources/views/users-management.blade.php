@@ -7,17 +7,18 @@
 @section('content')
 @php
     $roles = [
-        ['role' => 'Pegawai', 'focus' => 'Melihat profil, mengisi assessment, melihat rekomendasi pribadi', 'access' => ['Profil pegawai', 'Assessment mandiri', 'Riwayat pelatihan']],
-        ['role' => 'Atasan', 'focus' => 'Memverifikasi nilai assessment dan memberi catatan kebutuhan unit', 'access' => ['Verifikasi assessment', 'Penilaian indikator', 'Catatan urgensi']],
-        ['role' => 'SDM', 'focus' => 'Mengelola master data, pegawai, pelatihan, dan proses SAW', 'access' => ['Data pegawai', 'Master data', 'Analisis SAW', 'Laporan']],
-        ['role' => 'Pimpinan', 'focus' => 'Melihat ringkasan, menyetujui rencana pelatihan, dan memantau realisasi', 'access' => ['Dashboard', 'Approval rencana', 'Laporan pimpinan']],
+        ['role' => 'Admin', 'focus' => 'Mengelola seluruh konfigurasi sistem, user, master data, dan proses TNA.', 'access' => ['Semua modul', 'Manajemen pengguna', 'Master data', 'Analisis SAW', 'Laporan']],
+        ['role' => 'Petugas Kepegawaian', 'focus' => 'Menginput dan memelihara data pegawai, riwayat pelatihan, assessment, dan rekomendasi.', 'access' => ['Data pegawai', 'Riwayat pelatihan', 'Penilaian', 'Jalankan SAW', 'Kelola rekomendasi']],
+        ['role' => 'Pimpinan/Ketua', 'focus' => 'Meninjau hasil analisis, menyetujui prioritas, dan membaca laporan tindak lanjut.', 'access' => ['Dashboard', 'Hasil analisis', 'Persetujuan', 'Laporan']],
     ];
+
+    $users = \App\Models\User::orderBy('role')->orderBy('name')->get();
 @endphp
 
 <section class="module-hero">
     <div>
         <h3>Hak akses dibuat sesuai alur kerja TNA</h3>
-        <p>Modul ini menyiapkan struktur RBAC agar pegawai, atasan, SDM, dan pimpinan bekerja pada ruang akses yang tepat. Fitur ini mengikuti rancangan: data user, role, aktivasi/nonaktif akun, reset password, dan audit log.</p>
+        <p>Admin memegang konfigurasi penuh, petugas kepegawaian menginput data operasional termasuk riwayat pelatihan, sedangkan pimpinan/ketua fokus pada monitoring, persetujuan, dan laporan.</p>
     </div>
     <div class="module-hero-icon"><i class="fas fa-user-shield"></i></div>
 </section>
@@ -28,13 +29,13 @@
             <div class="module-card-icon"><i class="fas fa-users-gear"></i></div>
             <div>
                 <h6>Data User</h6>
-                <p>Akun dihubungkan dengan data pegawai agar aktivitas assessment, verifikasi, dan persetujuan selalu jelas pemiliknya.</p>
+                <p>Akun diberi role dan daftar permission agar aksi input, analisis, approval, dan laporan bisa dibatasi sesuai tugas.</p>
             </div>
         </div>
         <ul class="feature-list">
-            <li><i class="fas fa-check"></i><span>Pegawai, atasan langsung, SDM, dan pimpinan.</span></li>
+            <li><i class="fas fa-check"></i><span>Admin, petugas kepegawaian, dan pimpinan/ketua.</span></li>
             <li><i class="fas fa-check"></i><span>Status akun aktif/nonaktif untuk menjaga akses aplikasi.</span></li>
-            <li><i class="fas fa-check"></i><span>Reset password disiapkan untuk bantuan administrator.</span></li>
+            <li><i class="fas fa-check"></i><span>Permission disiapkan di model user dan bisa dipakai pada controller atau Blade.</span></li>
         </ul>
     </div>
     <div class="module-card">
@@ -50,6 +51,43 @@
             <li><i class="fas fa-check"></i><span>Input atau perubahan assessment.</span></li>
             <li><i class="fas fa-check"></i><span>Approval, penolakan, dan realisasi rencana pelatihan.</span></li>
         </ul>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Daftar User & Role</h5>
+    </div>
+    <div class="card-body table-responsive">
+        <table class="soft-table">
+            <thead>
+                <tr>
+                    <th>Nama</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($users as $user)
+                    <tr>
+                        <td>{{ $user->name }}</td>
+                        <td>{{ $user->email }}</td>
+                        <td><span class="pill">{{ $user->role_label }}</span></td>
+                        <td>
+                            <span class="pill">
+                                <i class="fas fa-{{ $user->is_active ? 'check' : 'times' }}"></i>
+                                {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
+                            </span>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">Belum ada user. Jalankan seeder untuk membuat akun awal.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 </div>
 

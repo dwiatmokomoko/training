@@ -5,6 +5,10 @@
 @section('page-subtitle', 'Informasi lengkap hasil analisis SAW')
 
 @section('content')
+@php
+    $canManageTrainingNeeds = \App\Support\Access::allows('training-needs.manage');
+    $canApproveTrainingNeeds = \App\Support\Access::allows('training-needs.approve');
+@endphp
 <div class="row">
     <div class="col-lg-8">
         <div class="card">
@@ -98,68 +102,6 @@
                 </div>
                 @endif
                 
-                <h6 class="mb-3">
-                    <i class="fas fa-calculator me-2"></i>
-                    Detail Perhitungan SAW
-                </h6>
-                
-                @if(count($sawBreakdown) > 0)
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Kode</th>
-                                <th>Kriteria</th>
-                                <th>Atribut</th>
-                                <th>Sumber Data</th>
-                                <th>Bobot</th>
-                                <th>Nilai</th>
-                                <th>Acuan Kolom</th>
-                                <th>Rumus</th>
-                                <th>Normalisasi</th>
-                                <th>Skor Terbobot</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php
-                                $totalWeightedScore = 0;
-                            @endphp
-                            @foreach($sawBreakdown as $item)
-                            @php
-                                $criterion = $item['criteria'];
-                                $totalWeightedScore += $item['weighted_score'];
-                            @endphp
-                            <tr>
-                                <td>{{ $criterion->code }}</td>
-                                <td>{{ $criterion->name }}</td>
-                                <td>{{ ucfirst($criterion->type) }}</td>
-                                <td>{{ $item['source'] }}</td>
-                                <td>{{ number_format($criterion->weight * 100, 1) }}%</td>
-                                <td>{{ $item['raw_score'] }}/5</td>
-                                <td>
-                                    Min {{ number_format($item['bound']['min'] ?? 0, 0) }} /
-                                    Max {{ number_format($item['bound']['max'] ?? 0, 0) }}
-                                </td>
-                                <td><code>{{ $item['formula'] ?? '-' }}</code></td>
-                                <td>{{ number_format($item['normalized_score'], 3) }}</td>
-                                <td>{{ number_format($item['weighted_score'], 4) }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot class="table-secondary">
-                            <tr>
-                                <th colspan="9">Total Skor SAW</th>
-                                <th>{{ number_format($totalWeightedScore, 4) }}</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                @else
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Belum ada data penilaian untuk pegawai ini.
-                </div>
-                @endif
             </div>
         </div>
     </div>
@@ -255,7 +197,7 @@
             </div>
         </div>
         
-        @if($trainingNeed->status === 'pending')
+        @if($trainingNeed->status === 'pending' && ($canManageTrainingNeeds || $canApproveTrainingNeeds))
         <div class="card mt-3">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -272,7 +214,9 @@
                         <label for="status" class="form-label">Status</label>
                         <select class="form-select" id="status" name="status">
                             <option value="pending" {{ $trainingNeed->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                            @if($canApproveTrainingNeeds)
                             <option value="approved" {{ $trainingNeed->status === 'approved' ? 'selected' : '' }}>Disetujui</option>
+                            @endif
                             <option value="rejected" {{ $trainingNeed->status === 'rejected' ? 'selected' : '' }}>Ditolak</option>
                             <option value="completed" {{ $trainingNeed->status === 'completed' ? 'selected' : '' }}>Selesai</option>
                         </select>
@@ -301,19 +245,97 @@
     </div>
     <div class="toolbar-actions">
         @if($trainingNeed->status === 'pending')
+            @if($canApproveTrainingNeeds)
         <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal">
             <i class="fas fa-check me-2"></i>
             Setujui
         </button>
+            @endif
+            @if($canManageTrainingNeeds || $canApproveTrainingNeeds)
         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
             <i class="fas fa-times me-2"></i>
             Tolak
         </button>
+            @endif
         @endif
         <a href="{{ route('training-needs.index') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-2"></i>
             Kembali
         </a>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0">
+            <i class="fas fa-calculator me-2"></i>
+            Detail Perhitungan SAW
+        </h5>
+        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#sawDetailPanel" aria-expanded="false" aria-controls="sawDetailPanel">
+            <i class="fas fa-eye me-2"></i>
+            Tampilkan / Sembunyikan
+        </button>
+    </div>
+    <div class="collapse" id="sawDetailPanel">
+        <div class="card-body">
+            @if(count($sawBreakdown) > 0)
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Kode</th>
+                            <th>Kriteria</th>
+                            <th>Atribut</th>
+                            <th>Sumber Data</th>
+                            <th>Bobot</th>
+                            <th>Nilai</th>
+                            <th>Acuan Kolom</th>
+                            <th>Rumus</th>
+                            <th>Normalisasi</th>
+                            <th>Skor Terbobot</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php
+                            $totalWeightedScore = 0;
+                        @endphp
+                        @foreach($sawBreakdown as $item)
+                        @php
+                            $criterion = $item['criteria'];
+                            $totalWeightedScore += $item['weighted_score'];
+                        @endphp
+                        <tr>
+                            <td>{{ $criterion->code }}</td>
+                            <td>{{ $criterion->name }}</td>
+                            <td>{{ ucfirst($criterion->type) }}</td>
+                            <td>{{ $item['source'] }}</td>
+                            <td>{{ number_format($criterion->weight * 100, 1) }}%</td>
+                            <td>{{ $item['raw_score'] }}/5</td>
+                            <td>
+                                Min {{ number_format($item['bound']['min'] ?? 0, 0) }} /
+                                Max {{ number_format($item['bound']['max'] ?? 0, 0) }}
+                            </td>
+                            <td><code>{{ $item['formula'] ?? '-' }}</code></td>
+                            <td>{{ number_format($item['normalized_score'], 3) }}</td>
+                            <td>{{ number_format($item['weighted_score'], 4) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="table-secondary">
+                        <tr>
+                            <th colspan="9">Total Skor SAW</th>
+                            <th>{{ number_format($totalWeightedScore, 4) }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            @else
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Belum ada data penilaian untuk pegawai ini.
+            </div>
+            @endif
+        </div>
     </div>
 </div>
 

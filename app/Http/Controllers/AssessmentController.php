@@ -6,11 +6,14 @@ use Illuminate\Http\Request;
 use App\Models\Assessment;
 use App\Models\Employee;
 use App\Models\Criteria;
+use App\Support\Access;
 
 class AssessmentController extends Controller
 {
     public function index()
     {
+        Access::denyIfCannot('assessments.manage');
+
         $assessments = Assessment::with(['employee.position', 'scores.criteria'])
             ->when(request('employee_id'), function ($query, $employeeId) {
                 $query->where('employee_id', $employeeId);
@@ -26,6 +29,8 @@ class AssessmentController extends Controller
 
     public function create()
     {
+        Access::denyIfCannot('assessments.manage');
+
         $employees = Employee::with('position')->get();
         $criteria = Criteria::latestTna()->get();
         
@@ -34,6 +39,8 @@ class AssessmentController extends Controller
 
     public function store(Request $request)
     {
+        Access::denyIfCannot('assessments.manage');
+
         $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'assessment_date' => 'required|date',
@@ -76,12 +83,16 @@ class AssessmentController extends Controller
 
     public function show(Assessment $assessment)
     {
+        Access::denyIfCannot('assessments.manage');
+
         $assessment->load(['employee.position', 'scores.criteria']);
         return view('assessments.show', compact('assessment'));
     }
 
     public function edit(Assessment $assessment)
     {
+        Access::denyIfCannot('assessments.manage');
+
         $employees = Employee::with('position')->get();
         $criteria = Criteria::latestTna()->get();
         
@@ -90,6 +101,8 @@ class AssessmentController extends Controller
 
     public function update(Request $request, Assessment $assessment)
     {
+        Access::denyIfCannot('assessments.manage');
+
         $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'assessment_date' => 'required|date',
@@ -131,6 +144,8 @@ class AssessmentController extends Controller
 
     public function destroy(Assessment $assessment)
     {
+        Access::denyIfCannot('assessments.manage');
+
         $assessment->delete();
 
         return redirect()->route('assessments.index')
@@ -139,6 +154,8 @@ class AssessmentController extends Controller
 
     public function bulkCreate()
     {
+        Access::denyIfCannot('assessments.manage');
+
         $employees = Employee::with('position')->get();
         $criteria = Criteria::latestTna()->get();
         
@@ -147,6 +164,8 @@ class AssessmentController extends Controller
 
     public function bulkStore(Request $request)
     {
+        Access::denyIfCannot('assessments.manage');
+
         $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'assessment_date' => 'required|date',

@@ -159,6 +159,7 @@
                             </p>
                         </div>
                         
+                        @if(\App\Support\Access::allows('analysis.run'))
                         <div class="analysis-action">
                             <button wire:click="runAnalysis" 
                                     wire:loading.attr="disabled" 
@@ -173,6 +174,7 @@
                                 </span>
                             </button>
                         </div>
+                        @endif
                     </div>
 
                     @if(count($recentTrainingNeeds) > 0)
@@ -324,6 +326,7 @@
                 
                 <div class="card-body-modern">
                     <div class="actions-grid">
+                        @if(\App\Support\Access::allows('employees.manage'))
                         <a href="{{ route('employees.create') }}" class="action-item">
                             <div class="action-icon employees">
                                 <i class="fas fa-user-plus"></i>
@@ -336,7 +339,9 @@
                                 <i class="fas fa-chevron-right"></i>
                             </div>
                         </a>
+                        @endif
                         
+                        @if(\App\Support\Access::allows('assessments.manage'))
                         <a href="{{ route('assessments.create') }}" class="action-item">
                             <div class="action-icon assessments">
                                 <i class="fas fa-plus"></i>
@@ -349,7 +354,9 @@
                                 <i class="fas fa-chevron-right"></i>
                             </div>
                         </a>
+                        @endif
                         
+                        @if(\App\Support\Access::allows('reports.view'))
                         <a href="{{ route('training-needs.report') }}" class="action-item">
                             <div class="action-icon reports">
                                 <i class="fas fa-download"></i>
@@ -362,6 +369,7 @@
                                 <i class="fas fa-chevron-right"></i>
                             </div>
                         </a>
+                        @endif
                     </div>
                 </div>
             </div>

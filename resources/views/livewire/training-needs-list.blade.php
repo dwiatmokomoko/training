@@ -49,201 +49,125 @@
         </div>
     </div>
 
-    <!-- Training Needs Cards/Table -->
+    <!-- Training Needs Grouped Tables -->
     <div wire:loading.remove>
         @if($trainingNeeds->count() > 0)
-        
-        <!-- Mobile Card View -->
-        <div class="d-lg-none">
-            <div class="row">
-                @foreach($trainingNeeds as $need)
-                <div class="col-12 mb-3">
-                    <div class="card training-card {{ $need->priority_rank <= 5 ? 'priority-high' : '' }}">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div class="priority-badge">
-                                    @if($need->priority_rank <= 3)
-                                        <span class="badge bg-danger priority-rank">#{{ $need->priority_rank }}</span>
-                                    @elseif($need->priority_rank <= 10)
-                                        <span class="badge bg-warning priority-rank">#{{ $need->priority_rank }}</span>
-                                    @else
-                                        <span class="badge bg-secondary priority-rank">#{{ $need->priority_rank }}</span>
-                                    @endif
-                                </div>
-                                <div class="status-badge">
-                                    @if($need->status === 'pending')
-                                        <span class="badge status-pending">Pending</span>
-                                    @elseif($need->status === 'approved')
-                                        <span class="badge status-approved">Disetujui</span>
-                                    @elseif($need->status === 'completed')
-                                        <span class="badge status-completed">Selesai</span>
-                                    @else
-                                        <span class="badge status-rejected">Ditolak</span>
-                                    @endif
-                                </div>
-                            </div>
-                            
-                            <div class="employee-info mb-3">
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="avatar-circle me-3">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0 employee-name">{{ $need->employee->name }}</h6>
-                                        <small class="text-muted">{{ $need->employee->nip }}</small>
-                                    </div>
-                                </div>
-                                <span class="badge position-badge">{{ $need->employee->position->name }}</span>
-                            </div>
-                            
-                            <div class="training-info mb-3">
-                                <h6 class="training-type">{{ $need->training_type }}</h6>
-                                <p class="training-desc text-muted small">{{ Str::limit($need->training_description, 80) }}</p>
-                            </div>
-                            
-                            <div class="score-section mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="small text-muted">Skor SAW</span>
-                                    <span class="fw-bold score-value">{{ number_format($need->saw_score, 4) }}</span>
-                                </div>
-                                <div class="progress score-progress">
-                                    <div class="progress-bar" style="width: {{ ($need->saw_score * 100) }}%"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="card-actions">
-                                <div class="btn-group w-100" role="group">
-                                    <a href="{{ route('training-needs.show', $need) }}" class="btn btn-outline-info btn-sm">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    @if($need->status === 'pending')
-                                    <button type="button" class="btn btn-outline-success btn-sm" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#updateStatusModal{{ $need->id }}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    @endif
-                                    <button wire:click="deleteTrainingNeed({{ $need->id }})" 
-                                            wire:confirm="Yakin ingin menghapus data ini?"
-                                            class="btn btn-outline-danger btn-sm">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
+            @foreach($groups as $group)
+                <section class="analysis-group mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                        <div>
+                            <h5 class="mb-0">{{ $group['label'] }}</h5>
+                            <small class="text-muted">{{ $group['items']->count() }} rekomendasi pelatihan</small>
                         </div>
                     </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
 
-        <!-- Desktop Table View -->
-        <div class="d-none d-lg-block">
-            <div class="table-responsive modern-table">
-                <table class="table table-hover">
-                    <thead class="table-header">
-                        <tr>
-                            <th class="priority-col">Prioritas</th>
-                            <th class="employee-col">Pegawai</th>
-                            <th class="position-col">Jabatan</th>
-                            <th class="training-col">Jenis Pelatihan</th>
-                            <th class="score-col">Skor SAW</th>
-                            <th class="status-col">Status</th>
-                            <th class="date-col">Tanggal</th>
-                            <th class="action-col">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($trainingNeeds as $need)
-                        <tr class="table-row {{ $need->priority_rank <= 5 ? 'priority-row' : '' }}">
-                            <td class="priority-cell">
-                                @if($need->priority_rank <= 3)
-                                    <span class="badge bg-danger priority-badge-lg">#{{ $need->priority_rank }}</span>
-                                @elseif($need->priority_rank <= 10)
-                                    <span class="badge bg-warning priority-badge-lg">#{{ $need->priority_rank }}</span>
-                                @else
-                                    <span class="badge bg-secondary priority-badge-lg">#{{ $need->priority_rank }}</span>
-                                @endif
-                            </td>
-                            <td class="employee-cell">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-circle me-3">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div>
-                                        <div class="employee-name">{{ $need->employee->name }}</div>
-                                        <small class="text-muted">{{ $need->employee->nip }}</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="position-cell">
-                                <span class="badge position-badge">{{ $need->employee->position->name }}</span>
-                            </td>
-                            <td class="training-cell">
-                                <div class="training-type">{{ $need->training_type }}</div>
-                                <small class="text-muted">{{ Str::limit($need->training_description, 50) }}</small>
-                            </td>
-                            <td class="score-cell">
-                                <div class="score-container">
-                                    <div class="progress score-progress mb-1">
-                                        <div class="progress-bar" style="width: {{ ($need->saw_score * 100) }}%"></div>
-                                    </div>
-                                    <small class="score-value">{{ number_format($need->saw_score, 4) }}</small>
-                                </div>
-                            </td>
-                            <td class="status-cell">
-                                @if($need->status === 'pending')
-                                    <span class="badge status-pending">Pending</span>
-                                @elseif($need->status === 'approved')
-                                    <span class="badge status-approved">Disetujui</span>
-                                @elseif($need->status === 'completed')
-                                    <span class="badge status-completed">Selesai</span>
-                                @else
-                                    <span class="badge status-rejected">Ditolak</span>
-                                @endif
-                            </td>
-                            <td class="date-cell">
-                                @if($need->recommended_date)
-                                    <span class="date-text">{{ $need->recommended_date->format('d/m/Y') }}</span>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            <td class="action-cell">
-                                <div class="btn-group action-buttons" role="group">
-                                    <a href="{{ route('training-needs.show', $need) }}" 
-                                       class="btn btn-outline-info btn-sm action-btn" 
-                                       title="Detail">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    @if($need->status === 'pending')
-                                    <button type="button" 
-                                            class="btn btn-outline-success btn-sm action-btn" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#updateStatusModal{{ $need->id }}" 
-                                            title="Update Status">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    @endif
-                                    <button wire:click="deleteTrainingNeed({{ $need->id }})" 
-                                            wire:confirm="Yakin ingin menghapus data ini?"
-                                            class="btn btn-outline-danger btn-sm action-btn" 
-                                            title="Hapus">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Pagination -->
-        <div class="pagination-container mt-4">
-            {{ $trainingNeeds->links() }}
-        </div>
+                    @if($group['items']->isNotEmpty())
+                        <div class="table-responsive modern-table">
+                            <table class="table table-hover">
+                                <thead class="table-header">
+                                    <tr>
+                                        <th class="priority-col">Prioritas</th>
+                                        <th class="employee-col">Pegawai</th>
+                                        <th class="position-col">Jabatan</th>
+                                        <th class="training-col">Jenis Pelatihan</th>
+                                        <th class="score-col">Skor SAW</th>
+                                        <th class="status-col">Status</th>
+                                        <th class="date-col">Tanggal</th>
+                                        <th class="action-col">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($group['items'] as $need)
+                                    <tr class="table-row {{ $need->priority_rank <= 5 ? 'priority-row' : '' }}">
+                                        <td class="priority-cell">
+                                            @if($need->priority_rank <= 3)
+                                                <span class="badge bg-danger priority-badge-lg">#{{ $need->priority_rank }}</span>
+                                            @elseif($need->priority_rank <= 10)
+                                                <span class="badge bg-warning priority-badge-lg">#{{ $need->priority_rank }}</span>
+                                            @else
+                                                <span class="badge bg-secondary priority-badge-lg">#{{ $need->priority_rank }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="employee-cell">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-circle me-3">
+                                                    <i class="fas fa-user"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="employee-name">{{ $need->employee->name }}</div>
+                                                    <small class="text-muted">{{ $need->employee->nip }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="position-cell">
+                                            <span class="badge position-badge">{{ $need->employee->position->name }}</span>
+                                        </td>
+                                        <td class="training-cell">
+                                            <div class="training-type">{{ $need->training_type }}</div>
+                                            <small class="text-muted">{{ Str::limit($need->training_description, 50) }}</small>
+                                        </td>
+                                        <td class="score-cell">
+                                            <div class="score-container">
+                                                <div class="progress score-progress mb-1">
+                                                    <div class="progress-bar" style="width: {{ ($need->saw_score * 100) }}%"></div>
+                                                </div>
+                                                <small class="score-value">{{ number_format($need->saw_score, 4) }}</small>
+                                            </div>
+                                        </td>
+                                        <td class="status-cell">
+                                            @if($need->status === 'pending')
+                                                <span class="badge status-pending">Pending</span>
+                                            @elseif($need->status === 'approved')
+                                                <span class="badge status-approved">Disetujui</span>
+                                            @elseif($need->status === 'completed')
+                                                <span class="badge status-completed">Selesai</span>
+                                            @else
+                                                <span class="badge status-rejected">Ditolak</span>
+                                            @endif
+                                        </td>
+                                        <td class="date-cell">
+                                            @if($need->recommended_date)
+                                                <span class="date-text">{{ $need->recommended_date->format('d/m/Y') }}</span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td class="action-cell">
+                                            <div class="btn-group action-buttons" role="group">
+                                                <a href="{{ route('training-needs.show', $need) }}"
+                                                   class="btn btn-outline-info btn-sm action-btn"
+                                                   title="Detail">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                @if($need->status === 'pending' && (\App\Support\Access::allows('training-needs.manage') || \App\Support\Access::allows('training-needs.approve')))
+                                                <button type="button"
+                                                        class="btn btn-outline-success btn-sm action-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#updateStatusModal{{ $need->id }}"
+                                                        title="Update Status">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                @endif
+                                                @if(\App\Support\Access::allows('training-needs.manage'))
+                                                <button wire:click="deleteTrainingNeed({{ $need->id }})"
+                                                        wire:confirm="Yakin ingin menghapus data ini?"
+                                                        class="btn btn-outline-danger btn-sm action-btn"
+                                                        title="Hapus">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="empty-category">Belum ada rekomendasi untuk kategori {{ $group['label'] }}.</div>
+                    @endif
+                </section>
+            @endforeach
         
         @else
         <div class="empty-state">
@@ -264,7 +188,7 @@
                     Klik tombol "Jalankan Analisis SAW" untuk memulai analisis kebutuhan pelatihan.
                 @endif
             </p>
-            @if(!$search && !$statusFilter)
+            @if(!$search && !$statusFilter && \App\Support\Access::allows('analysis.run'))
             <button type="button" class="btn btn-primary empty-action" wire:click="runAnalysis" wire:loading.attr="disabled">
                 <span wire:loading.remove wire:target="runAnalysis">
                     <i class="fas fa-calculator me-2"></i>
@@ -281,7 +205,7 @@
     </div>
 
     <!-- Summary Cards -->
-    @if($trainingNeeds->total() > 0)
+    @if($trainingNeeds->count() > 0)
     <div class="summary-section mt-5">
         <div class="row g-3">
             <div class="col-lg-3 col-md-6">
@@ -354,7 +278,9 @@
                         <label class="form-label">Status</label>
                         <select class="form-select" id="status{{ $need->id }}">
                             <option value="pending" {{ $need->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                            @if(\App\Support\Access::allows('training-needs.approve'))
                             <option value="approved" {{ $need->status === 'approved' ? 'selected' : '' }}>Disetujui</option>
+                            @endif
                             <option value="rejected" {{ $need->status === 'rejected' ? 'selected' : '' }}>Ditolak</option>
                             <option value="completed" {{ $need->status === 'completed' ? 'selected' : '' }}>Selesai</option>
                         </select>

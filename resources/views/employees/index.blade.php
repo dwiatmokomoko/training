@@ -5,6 +5,10 @@
 @section('page-subtitle', 'Manajemen Data Pegawai Pengadilan Negeri Sleman')
 
 @section('content')
+@php
+    $canManageEmployees = \App\Support\Access::allows('employees.manage');
+@endphp
+
 <div class="toolbar-panel mb-4">
     <div>
         <h5 class="toolbar-title">Daftar Pegawai</h5>
@@ -23,10 +27,12 @@
                 <button class="btn btn-outline-primary" type="submit">Cari</button>
             </div>
         </form>
+        @if($canManageEmployees)
         <a href="{{ route('employees.create') }}" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>
             Tambah Pegawai
         </a>
+        @endif
     </div>
 </div>
 
@@ -98,6 +104,7 @@
                                 <a href="{{ route('employees.show', $employee) }}" class="btn btn-sm btn-outline-info" title="Detail">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                @if($canManageEmployees)
                                 <a href="{{ route('employees.edit', $employee) }}" class="btn btn-sm btn-outline-warning" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
@@ -108,6 +115,7 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

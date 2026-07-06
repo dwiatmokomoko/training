@@ -5,12 +5,17 @@
 @section('page-subtitle', 'Manajemen Penilaian Berdasarkan Kriteria SAW')
 
 @section('content')
+@php
+    $canManageAssessments = \App\Support\Access::allows('assessments.manage');
+@endphp
+
 <div class="toolbar-panel mb-4">
     <div>
         <h5 class="toolbar-title">Daftar Penilaian</h5>
         <p class="toolbar-subtitle">Pantau assessment kompetensi pegawai dan saring berdasarkan nama pegawai.</p>
     </div>
     <div class="toolbar-actions">
+        @if($canManageAssessments)
         <a href="{{ route('assessments.create') }}" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>
             Tambah Penilaian
@@ -19,6 +24,7 @@
             <i class="fas fa-layer-group me-2"></i>
             Penilaian Bulk
         </a>
+        @endif
         <form action="{{ route('assessments.index') }}" method="GET" class="toolbar-search">
             <div class="input-group">
             <select class="form-select" id="filterEmployee" name="employee_id">
@@ -105,6 +111,7 @@
                                 <a href="{{ route('assessments.show', $assessment) }}" class="btn btn-sm btn-outline-info" title="Detail">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                @if($canManageAssessments)
                                 <a href="{{ route('assessments.edit', $assessment) }}" class="btn btn-sm btn-outline-warning" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
@@ -115,6 +122,7 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

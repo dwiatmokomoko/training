@@ -8,6 +8,7 @@ use App\Models\Criteria;
 use App\Models\Employee;
 use App\Models\JobFamily;
 use App\Models\Position;
+use App\Models\TrainingHistory;
 use App\Models\User;
 use App\Models\WorkUnit;
 use App\Services\SAWService;
@@ -32,6 +33,7 @@ class DatabaseSeeder extends Seeder
 
         $this->seedAssessments($employees, $criteria);
         $this->seedUsers();
+        $this->seedTrainingHistories($employees);
         $this->seedTrainingNeeds();
     }
 
@@ -218,14 +220,50 @@ class DatabaseSeeder extends Seeder
     private function seedUsers(): void
     {
         foreach ([
-            ['name' => 'Admin SDM TNA', 'email' => 'admin@pn-sleman.go.id'],
-            ['name' => 'Operator Kepegawaian', 'email' => 'sdm@pn-sleman.go.id'],
-            ['name' => 'Atasan Langsung', 'email' => 'atasan@pn-sleman.go.id'],
-            ['name' => 'Pimpinan Pengadilan', 'email' => 'pimpinan@pn-sleman.go.id'],
+            ['name' => 'Admin TNA', 'email' => 'admin@pn-sleman.go.id', 'role' => User::ROLE_ADMIN],
+            ['name' => 'Petugas Kepegawaian', 'email' => 'sdm@pn-sleman.go.id', 'role' => User::ROLE_PETUGAS_KEPEGAWAIAN],
+            ['name' => 'Pimpinan Pengadilan', 'email' => 'pimpinan@pn-sleman.go.id', 'role' => User::ROLE_PIMPINAN],
         ] as $user) {
             User::updateOrCreate(['email' => $user['email']], [
                 'name' => $user['name'],
                 'password' => Hash::make('password'),
+                'role' => $user['role'],
+                'permissions' => User::ROLE_PERMISSIONS[$user['role']],
+                'is_active' => true,
+            ]);
+        }
+    }
+
+    private function seedTrainingHistories($employees): void
+    {
+        $admin = User::where('role', User::ROLE_ADMIN)->first();
+
+        foreach ($employees as $index => $employee) {
+            if (! $employee->last_training_date) {
+                continue;
+            }
+
+            $category = $employee->position->jobFamily?->name ?? 'Umum';
+            $trainingName = match ($employee->position->jobFamily?->code) {
+                'HK' => 'Bimbingan Teknis Teknis Yudisial',
+                'KP' => 'Bimbingan Teknis Administrasi Perkara',
+                'KS' => 'Pelatihan Administrasi Kesekretariatan',
+                default => 'Pelatihan Pengembangan Kompetensi',
+            };
+
+            TrainingHistory::updateOrCreate([
+                'employee_id' => $employee->id,
+                'training_name' => $trainingName,
+                'start_date' => $employee->last_training_date->toDateString(),
+            ], [
+                'provider' => 'Badan Litbang Diklat Kumdil MA',
+                'category' => $category,
+                'end_date' => $employee->last_training_date->copy()->addDays($index % 3)->toDateString(),
+                'hours' => 20 + (($index % 4) * 8),
+                'certificate_number' => 'TNA-' . $employee->nip . '-' . $employee->last_training_date->format('Y'),
+                'result' => 'Selesai',
+                'notes' => 'Data awal riwayat pelatihan untuk simulasi TNA.',
+                'created_by' => $admin?->id,
             ]);
         }
     }

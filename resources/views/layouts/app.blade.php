@@ -620,6 +620,9 @@
     @stack('styles')
 </head>
 <body class="bg-slate-100 text-slate-900 antialiased">
+    @php
+        $currentUser = \Illuminate\Support\Facades\Auth::user();
+    @endphp
     <div class="app-shell min-h-screen">
         <div class="sidebar-overlay" data-sidebar-close></div>
         <aside class="sidebar-shell">
@@ -638,46 +641,66 @@
                 </div>
 
                 <nav class="nav flex-column">
+                    @if(\App\Support\Access::allows('dashboard.view'))
                     <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                         <i class="fas fa-tachometer-alt me-2"></i>
                         Dashboard
                     </a>
+                    @endif
+                    @if(\App\Support\Access::allows('master-data.manage'))
                     <a class="nav-link {{ request()->routeIs('users-management') ? 'active' : '' }}" href="{{ route('users-management') }}">
                         <i class="fas fa-user-shield me-2"></i>
                         Manajemen Pengguna
                     </a>
+                    @endif
+                    @if(\App\Support\Access::allows('employees.view') || \App\Support\Access::allows('employees.manage'))
                     <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
                         <i class="fas fa-users me-2"></i>
                         Data Pegawai
                     </a>
+                    @endif
+                    @if(\App\Support\Access::allows('master-data.manage'))
                     <a class="nav-link {{ request()->routeIs('positions-competencies') ? 'active' : '' }}" href="{{ route('positions-competencies') }}">
                         <i class="fas fa-sitemap me-2"></i>
                         Jabatan & Kompetensi
                     </a>
+                    @endif
+                    @if(\App\Support\Access::allows('assessments.manage'))
                     <a class="nav-link {{ request()->routeIs('performance', 'assessments.*') ? 'active' : '' }}" href="{{ route('performance') }}">
                         <i class="fas fa-clipboard-check me-2"></i>
                         Penilaian Kinerja
                     </a>
+                    @endif
+                    @if(\App\Support\Access::allows('training-needs.view') || \App\Support\Access::allows('training-needs.manage'))
                     <a class="nav-link {{ request()->routeIs('training-needs.index', 'training-needs.show') ? 'active' : '' }}" href="{{ route('training-needs.index') }}">
                         <i class="fas fa-magnifying-glass-chart me-2"></i>
                         Analisis TNA
                     </a>
+                    @endif
+                    @if(\App\Support\Access::allows('training-needs.view') || \App\Support\Access::allows('training-needs.manage'))
                     <a class="nav-link {{ request()->routeIs('training-recommendations') ? 'active' : '' }}" href="{{ route('training-recommendations') }}">
                         <i class="fas fa-graduation-cap me-2"></i>
                         Rekomendasi Pelatihan
                     </a>
+                    @endif
+                    @if(\App\Support\Access::allows('training-needs.manage'))
                     <a class="nav-link {{ request()->routeIs('training-plans') ? 'active' : '' }}" href="{{ route('training-plans') }}">
                         <i class="fas fa-calendar-check me-2"></i>
                         Perencanaan Pelatihan
                     </a>
+                    @endif
+                    @if(\App\Support\Access::allows('reports.view'))
                     <a class="nav-link {{ request()->routeIs('training-needs.report') ? 'active' : '' }}" href="{{ route('training-needs.report') }}">
                         <i class="fas fa-chart-bar me-2"></i>
                         Laporan
                     </a>
+                    @endif
+                    @if(\App\Support\Access::allows('master-data.manage'))
                     <a class="nav-link {{ request()->routeIs('master-data') ? 'active' : '' }}" href="{{ route('master-data') }}">
                         <i class="fas fa-database me-2"></i>
                         Master Data
                     </a>
+                    @endif
                     <a class="nav-link {{ request()->routeIs('system-flow') ? 'active' : '' }}" href="{{ route('system-flow') }}">
                         <i class="fas fa-route me-2"></i>
                         Alur Sistem
@@ -703,10 +726,10 @@
                             </div>
                             <div class="text-end d-none d-sm-block">
                                 <div class="d-flex align-items-center">
-                                    <i class="fas fa-calendar-alt me-2"></i>
-                                    <span>{{ now()->format('d F Y') }}</span>
+                                    <i class="fas fa-user-shield me-2"></i>
+                                    <span>{{ $currentUser?->role_label ?? 'Mode Admin Demo' }}</span>
                                 </div>
-                                <small class="opacity-75">{{ now()->format('H:i') }} WIB</small>
+                                <small class="opacity-75">{{ now()->format('d F Y H:i') }} WIB</small>
                             </div>
                         </div>
                     </div>

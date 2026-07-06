@@ -7,11 +7,14 @@ use App\Models\TrainingNeed;
 use App\Models\Employee;
 use App\Models\Criteria;
 use App\Services\SAWService;
+use App\Support\Access;
 
 class TrainingNeedController extends Controller
 {
     public function index()
     {
+        Access::denyIfCannotAny(['training-needs.view', 'training-needs.manage']);
+
         $trainingNeeds = TrainingNeed::with(['employee.position'])
             ->orderBy('priority_rank')
             ->paginate(15);
@@ -22,6 +25,8 @@ class TrainingNeedController extends Controller
 
     public function show(TrainingNeed $trainingNeed)
     {
+        Access::denyIfCannotAny(['training-needs.view', 'training-needs.manage']);
+
         $trainingNeed->load(['employee.position.jobFamily', 'employee.workUnit', 'employee.assessments.scores.criteria']);
         $latestAssessment = $trainingNeed->employee->assessments->sortByDesc('created_at')->first();
         $sawBreakdown = $latestAssessment
@@ -33,6 +38,8 @@ class TrainingNeedController extends Controller
 
     public function update(Request $request, TrainingNeed $trainingNeed)
     {
+        Access::denyIfCannot(in_array($request->status, ['approved', 'rejected'], true) ? 'training-needs.approve' : 'training-needs.manage');
+
         $request->validate([
             'status' => 'required|in:pending,approved,rejected,completed',
             'notes' => 'nullable|string'
@@ -49,6 +56,8 @@ class TrainingNeedController extends Controller
 
     public function destroy(TrainingNeed $trainingNeed)
     {
+        Access::denyIfCannot('training-needs.manage');
+
         $trainingNeed->delete();
 
         return redirect()->route('training-needs.index')
@@ -57,6 +66,8 @@ class TrainingNeedController extends Controller
 
     public function report()
     {
+        Access::denyIfCannot('reports.view');
+
         $trainingNeeds = TrainingNeed::with(['employee.position'])
             ->orderBy('priority_rank')
             ->get();
@@ -77,6 +88,8 @@ class TrainingNeedController extends Controller
 
     public function recommendations()
     {
+        Access::denyIfCannotAny(['training-needs.view', 'training-needs.manage']);
+
         $trainingNeeds = TrainingNeed::with(['employee.position.jobFamily', 'employee.workUnit'])
             ->orderBy('priority_rank')
             ->get();

@@ -39,7 +39,7 @@ class SAWService
      */
     public function buildDecisionMatrix(?Collection $employees = null, ?Collection $criteria = null): Collection
     {
-        $employees ??= Employee::with(['assessments.scores.criteria', 'position.jobFamily', 'workUnit'])->get();
+        $employees ??= Employee::with(['assessments.scores.criteria', 'position.jobFamily', 'workUnit', 'trainingHistories'])->get();
         $criteria ??= Criteria::latestTna()->get();
 
         if ($employees->isEmpty() || $criteria->isEmpty()) {
@@ -158,7 +158,7 @@ class SAWService
     public function calculateEmployeeBreakdown(Employee $employee, Assessment $assessment, ?Collection $criteria = null): array
     {
         $criteria ??= Criteria::latestTna()->get();
-        $employees = Employee::with(['assessments.scores.criteria', 'position.jobFamily', 'workUnit'])->get();
+        $employees = Employee::with(['assessments.scores.criteria', 'position.jobFamily', 'workUnit', 'trainingHistories'])->get();
         $matrix = $this->buildDecisionMatrix($employees, $criteria);
         $result = $this->normalizeMatrix($matrix, $criteria)
             ->first(fn ($row) => $row['employee']->id === $employee->id && $row['assessment']->id === $assessment->id);

@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\TrainingNeed;
 use App\Services\SAWService;
+use App\Support\Access;
 
 class TrainingNeedsList extends Component
 {
@@ -28,6 +29,8 @@ class TrainingNeedsList extends Component
 
     public function updateStatus($trainingNeedId, $status, $notes = null)
     {
+        Access::denyIfCannot(in_array($status, ['approved', 'rejected'], true) ? 'training-needs.approve' : 'training-needs.manage');
+
         $trainingNeed = TrainingNeed::find($trainingNeedId);
         
         if ($trainingNeed) {
@@ -43,6 +46,8 @@ class TrainingNeedsList extends Component
 
     public function deleteTrainingNeed($trainingNeedId)
     {
+        Access::denyIfCannot('training-needs.manage');
+
         $trainingNeed = TrainingNeed::find($trainingNeedId);
         
         if ($trainingNeed) {
@@ -54,6 +59,8 @@ class TrainingNeedsList extends Component
 
     public function runAnalysis()
     {
+        Access::denyIfCannot('analysis.run');
+
         $sawService = app(SAWService::class);
         $results = $sawService->calculateTrainingNeeds();
         $sawService->saveTrainingNeeds($results);
@@ -64,7 +71,7 @@ class TrainingNeedsList extends Component
 
     public function render()
     {
-        $query = TrainingNeed::with(['employee.position'])
+        $query = TrainingNeed::with(['employee.position.jobFamily'])
             ->orderBy('priority_rank');
 
         if ($this->statusFilter) {
@@ -80,10 +87,25 @@ class TrainingNeedsList extends Component
             });
         }
 
-        $trainingNeeds = $query->paginate(15);
+        $trainingNeeds = $query->get();
+        $groups = collect([
+            'HK' => ['label' => 'Hakim', 'items' => $trainingNeeds->filter(fn ($need) => $need->employee->position->jobFamily?->code === 'HK')->values()],
+            'KP' => ['label' => 'Kepaniteraan', 'items' => $trainingNeeds->filter(fn ($need) => $need->employee->position->jobFamily?->code === 'KP')->values()],
+            'KS' => ['label' => 'Kesekretariatan', 'items' => $trainingNeeds->filter(fn ($need) => $need->employee->position->jobFamily?->code === 'KS')->values()],
+        ]);
+
+        $knownCodes = ['HK', 'KP', 'KS'];
+        $otherItems = $trainingNeeds
+            ->filter(fn ($need) => ! in_array($need->employee->position->jobFamily?->code, $knownCodes, true))
+            ->values();
+
+        if ($otherItems->isNotEmpty()) {
+            $groups->put('OTHER', ['label' => 'Lainnya', 'items' => $otherItems]);
+        }
 
         return view('livewire.training-needs-list', [
-            'trainingNeeds' => $trainingNeeds
+            'trainingNeeds' => $trainingNeeds,
+            'groups' => $groups,
         ]);
     }
 }

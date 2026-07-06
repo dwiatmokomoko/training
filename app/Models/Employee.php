@@ -53,6 +53,11 @@ class Employee extends Model
         return $this->hasMany(TrainingNeed::class);
     }
 
+    public function trainingHistories(): HasMany
+    {
+        return $this->hasMany(TrainingHistory::class)->latest('end_date')->latest('start_date');
+    }
+
     public function getAgeAttribute()
     {
         return $this->birth_date?->age;
@@ -67,7 +72,25 @@ class Employee extends Model
 
     public function getYearsSinceLastTrainingAttribute(): ?int
     {
-        return $this->last_training_date?->diffInYears(now());
+        $latestTrainingDate = $this->latest_training_date;
+
+        return $latestTrainingDate?->diffInYears(now());
+    }
+
+    public function getLatestTrainingDateAttribute()
+    {
+        $latestHistory = $this->relationLoaded('trainingHistories')
+            ? $this->trainingHistories
+                ->filter(fn ($history) => $history->end_date || $history->start_date)
+                ->sortByDesc(fn ($history) => $history->end_date ?? $history->start_date)
+                ->first()
+            : $this->trainingHistories()
+                ->where(fn ($query) => $query->whereNotNull('end_date')->orWhereNotNull('start_date'))
+                ->get()
+                ->sortByDesc(fn ($history) => $history->end_date ?? $history->start_date)
+                ->first();
+
+        return $latestHistory?->end_date ?? $latestHistory?->start_date ?? $this->last_training_date;
     }
 
     public function getYearsSinceLastPromotionAttribute(): ?int
