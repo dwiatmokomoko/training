@@ -63,7 +63,7 @@
 
                     @if($group['items']->isNotEmpty())
                         <div class="table-responsive modern-table">
-                            <table class="table table-hover">
+                            <table class="table table-hover js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
                                 <thead class="table-header">
                                     <tr>
                                         <th class="priority-col">Prioritas</th>
@@ -738,6 +738,29 @@
         .training-needs-container .summary-card:hover,
         .training-needs-container .table-row:hover {
             transform: none;
+        }
+
+        .training-needs-container .table-header th {
+            background: #f8fafc !important;
+            color: var(--text-muted) !important;
+            border-bottom: 1px solid var(--line) !important;
+        }
+
+        .training-needs-container .avatar-circle,
+        .training-needs-container .summary-icon {
+            background: var(--ma-light-green) !important;
+            color: var(--ma-dark-green) !important;
+        }
+
+        .training-needs-container .position-badge {
+            background: var(--ma-light-yellow) !important;
+            color: #5f4614 !important;
+        }
+
+        .training-needs-container .modern-table,
+        .training-needs-container .summary-card,
+        .training-needs-container .training-card {
+            border: 1px solid var(--line);
         }
     </style>
 

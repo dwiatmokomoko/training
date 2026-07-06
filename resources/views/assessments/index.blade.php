@@ -59,7 +59,7 @@
     <div class="card-body">
         @if($assessments->count() > 0)
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover js-data-table" data-page-length="10" data-order="[[3,&quot;desc&quot;]]">
                 <thead>
                     <tr>
                         <th>Pegawai</th>
@@ -131,10 +131,6 @@
             </table>
         </div>
 
-        <!-- Pagination -->
-        <div class="d-flex justify-content-center mt-3">
-            {{ $assessments->links() }}
-        </div>
         @else
         <div class="text-center py-4">
             <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
@@ -162,7 +158,7 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h4 class="text-primary">{{ $assessments->total() }}</h4>
+                <h4 class="text-primary">{{ $assessments->count() }}</h4>
                 <small class="text-muted">Total Penilaian</small>
             </div>
         </div>

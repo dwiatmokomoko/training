@@ -6,8 +6,18 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\TrainingNeedController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\TrainingHistoryController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+Route::post('/logout', function (Request $request) {
+    Auth::logout();
+
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect()->route('dashboard')->with('success', 'Anda berhasil logout.');
+})->name('logout');
 Route::view('/alur-sistem', 'system-flow')->name('system-flow');
 Route::get('/manajemen-pengguna', function () {
     \App\Support\Access::denyIfCannot('master-data.manage');

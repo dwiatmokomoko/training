@@ -10,19 +10,19 @@
     @livewireStyles
     <style>
         :root {
-            --ma-green: #1f7a3a;
-            --ma-dark-green: #11532a;
-            --ma-light-green: #e8f5ec;
-            --ma-yellow: #f2c94c;
-            --ma-dark-yellow: #d89d10;
-            --ma-light-yellow: #fff7d6;
+            --ma-green: #157347;
+            --ma-dark-green: #0f5132;
+            --ma-light-green: #eaf6ef;
+            --ma-yellow: #d9a441;
+            --ma-dark-yellow: #b78322;
+            --ma-light-yellow: #fbf4df;
             --surface: #ffffff;
-            --surface-muted: #f5f7f8;
-            --line: #dfe5e8;
-            --text-main: #1f2933;
+            --surface-muted: #f6f8fa;
+            --line: #e2e8f0;
+            --text-main: #182230;
             --text-muted: #667085;
             --shadow-sm: 0 2px 10px rgba(15, 23, 42, 0.06);
-            --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.10);
+            --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.09);
         }
 
         body {
@@ -55,11 +55,13 @@
 
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(180deg, var(--ma-dark-green) 0%, #163f2a 100%);
-            box-shadow: 2px 0 16px rgba(15, 23, 42, 0.14);
+            background: #0b2f21;
+            box-shadow: 2px 0 18px rgba(15, 23, 42, 0.16);
             position: sticky;
             top: 0;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-brand {
@@ -79,32 +81,118 @@
             border-radius: 8px;
         }
         
-        .sidebar .nav-link {
-            color: rgba(255,255,255,0.9);
-            padding: 0.8rem 1rem;
-            margin: 0.25rem 0;
+        .sidebar-nav {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .sidebar-section-label {
+            color: rgba(255,255,255,0.48);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            margin: 0.9rem 0 0.25rem;
+            text-transform: uppercase;
+        }
+
+        .sidebar .nav-link,
+        .sidebar-group-toggle {
+            width: 100%;
+            color: rgba(255,255,255,0.84);
+            padding: 0.68rem 0.78rem;
             border-radius: 8px;
-            transition: all 0.3s;
-            border-left: 3px solid transparent;
-            font-weight: 600;
+            transition: all 0.18s ease;
+            border: 1px solid transparent;
+            background: transparent;
+            font-weight: 650;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 0.62rem;
+            text-decoration: none;
         }
-        
+
         .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
+        .sidebar .nav-link.active,
+        .sidebar-group-toggle:hover,
+        .sidebar-group-toggle.active {
             color: white;
-            background-color: rgba(255,255,255,0.12);
-            border-left-color: var(--ma-yellow);
+            background-color: rgba(255,255,255,0.10);
+            border-color: rgba(255,255,255,0.10);
         }
-        
-        .sidebar .nav-link i {
-            color: var(--ma-yellow);
+
+        .sidebar .nav-link.active,
+        .sidebar-group-toggle.active {
+            background: rgba(255,255,255,0.14);
+            box-shadow: inset 3px 0 0 var(--ma-yellow);
+        }
+
+        .sidebar .nav-link i,
+        .sidebar-group-toggle i:first-child {
+            color: #d9c38b;
             width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-submenu {
+            display: grid;
+            gap: 0.2rem;
+            margin: 0.25rem 0 0.45rem 2rem;
+            padding-left: 0.55rem;
+            border-left: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .sidebar-submenu .nav-link {
+            font-size: 0.92rem;
+            padding: 0.54rem 0.65rem;
+            color: rgba(255,255,255,0.74);
+        }
+
+        .sidebar-chevron {
+            margin-left: auto;
+            transition: transform 0.18s ease;
+            color: rgba(255,255,255,0.58) !important;
+        }
+
+        .sidebar-group-toggle[aria-expanded="true"] .sidebar-chevron {
+            transform: rotate(180deg);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.10);
+        }
+
+        .sidebar-user {
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: rgba(255,255,255,0.82);
+            background: rgba(255,255,255,0.06);
+            margin-bottom: 0.75rem;
+        }
+
+        .logout-button {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px solid rgba(255,255,255,0.16);
+            color: white;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 0.65rem 0.75rem;
+            font-weight: 700;
+        }
+
+        .logout-button:hover {
+            background: rgba(255,255,255,0.14);
         }
         
         .main-content {
-            background:
-                radial-gradient(circle at top left, rgba(31, 122, 58, 0.08), transparent 32rem),
-                linear-gradient(180deg, #f8fafc 0%, #eef4f0 100%);
+            background: linear-gradient(180deg, #f8fafc 0%, #f2f6f4 100%);
             min-height: 100vh;
         }
         
@@ -116,14 +204,15 @@
         }
         
         .card:hover {
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-sm);
         }
-        
+
         .card-header {
-            background: linear-gradient(135deg, var(--ma-green) 0%, var(--ma-dark-green) 100%);
-            color: white;
+            background: #ffffff;
+            color: var(--text-main);
             border-radius: 8px 8px 0 0 !important;
-            border-bottom: 2px solid var(--ma-yellow);
+            border-bottom: 1px solid var(--line);
+            padding: 0.95rem 1rem;
         }
 
         .btn {
@@ -132,27 +221,28 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--ma-green) 0%, var(--ma-dark-green) 100%);
-            border: none;
+            background: var(--ma-green);
+            border: 1px solid var(--ma-green);
             transition: all 0.3s;
         }
         
         .btn-primary:hover {
-            background: linear-gradient(135deg, var(--ma-dark-green) 0%, var(--ma-green) 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(34,139,34,0.3);
+            background: var(--ma-dark-green);
+            border-color: var(--ma-dark-green);
+            box-shadow: 0 6px 14px rgba(21, 115, 71, 0.18);
         }
         
         .btn-success {
-            background: linear-gradient(135deg, var(--ma-yellow) 0%, var(--ma-dark-yellow) 100%);
-            border: none;
-            color: #333;
+            background: #f4c765;
+            border: 1px solid #f4c765;
+            color: #2c2109;
             font-weight: 600;
         }
         
         .btn-success:hover {
-            background: linear-gradient(135deg, var(--ma-dark-yellow) 0%, var(--ma-yellow) 100%);
-            color: #333;
+            background: #e5b34d;
+            border-color: #e5b34d;
+            color: #2c2109;
         }
         
         .badge.bg-primary {
@@ -199,22 +289,21 @@
         }
         
         .header-gradient {
-            background:
-                linear-gradient(135deg, rgba(17, 83, 42, 0.96) 0%, rgba(31, 122, 58, 0.96) 100%),
-                radial-gradient(circle at 15% 20%, rgba(242, 201, 76, 0.35), transparent 20rem);
-            color: white;
+            background: #ffffff;
             padding: 1.25rem 0;
             margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-            border-radius: 0 0 16px 16px;
-            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
+            border-radius: 0 0 14px 14px;
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--line);
+            color: var(--text-main);
         }
 
         .sidebar-toggle {
             width: 42px;
             height: 42px;
-            border: 1px solid rgba(255,255,255,0.25);
-            background: rgba(255,255,255,0.12);
-            color: white;
+            border: 1px solid var(--line);
+            background: white;
+            color: var(--ma-dark-green);
             border-radius: 8px;
             display: inline-flex;
             align-items: center;
@@ -223,8 +312,8 @@
         }
 
         .sidebar-toggle:hover {
-            background: rgba(255,255,255,0.2);
-            color: white;
+            background: var(--ma-light-green);
+            color: var(--ma-dark-green);
         }
 
         .sidebar-overlay {
@@ -447,7 +536,8 @@
         }
 
         .dt-container .dt-layout-row {
-            margin: 0.35rem 0 0.85rem;
+            align-items: center;
+            margin: 0.2rem 0 0.9rem;
             gap: 0.75rem;
         }
 
@@ -457,6 +547,7 @@
             border-radius: 8px;
             padding: 0.45rem 0.7rem;
             outline: none;
+            background: #fff;
         }
 
         .dt-container .dt-search input:focus,
@@ -479,6 +570,20 @@
             background: var(--ma-green) !important;
             color: white !important;
             border-color: var(--ma-green) !important;
+        }
+
+        .dt-container .dt-info {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        .dt-container table.dataTable > thead > tr > th,
+        .dt-container table.dataTable > thead > tr > td {
+            border-bottom: 1px solid var(--line);
+        }
+
+        .dt-container table.dataTable > tbody > tr:hover > * {
+            box-shadow: inset 0 0 0 9999px rgba(21, 115, 71, 0.035) !important;
         }
 
         .pill {
@@ -622,6 +727,9 @@
 <body class="bg-slate-100 text-slate-900 antialiased">
     @php
         $currentUser = \Illuminate\Support\Facades\Auth::user();
+        $employeeMenuActive = request()->routeIs('employees.*', 'performance', 'assessments.*');
+        $trainingMenuActive = request()->routeIs('training-needs.*', 'training-recommendations', 'training-plans');
+        $settingsMenuActive = request()->routeIs('users-management', 'positions-competencies', 'master-data', 'system-flow');
     @endphp
     <div class="app-shell min-h-screen">
         <div class="sidebar-overlay" data-sidebar-close></div>
@@ -640,72 +748,116 @@
                     </button>
                 </div>
 
-                <nav class="nav flex-column">
+                <nav class="sidebar-nav">
                     @if(\App\Support\Access::allows('dashboard.view'))
+                    <div class="sidebar-section-label">Utama</div>
                     <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                         <i class="fas fa-tachometer-alt me-2"></i>
                         Dashboard
                     </a>
                     @endif
-                    @if(\App\Support\Access::allows('master-data.manage'))
-                    <a class="nav-link {{ request()->routeIs('users-management') ? 'active' : '' }}" href="{{ route('users-management') }}">
-                        <i class="fas fa-user-shield me-2"></i>
-                        Manajemen Pengguna
-                    </a>
+
+                    @if(\App\Support\Access::allows('employees.view') || \App\Support\Access::allows('employees.manage') || \App\Support\Access::allows('assessments.manage'))
+                    <div class="sidebar-section-label">Data</div>
+                    <button class="sidebar-group-toggle {{ $employeeMenuActive ? 'active' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#employeeMenu" aria-expanded="{{ $employeeMenuActive ? 'true' : 'false' }}" aria-controls="employeeMenu">
+                        <i class="fas fa-users"></i>
+                        Kepegawaian
+                        <i class="fas fa-chevron-down sidebar-chevron"></i>
+                    </button>
+                    <div class="collapse {{ $employeeMenuActive ? 'show' : '' }}" id="employeeMenu">
+                        <div class="sidebar-submenu">
+                            @if(\App\Support\Access::allows('employees.view') || \App\Support\Access::allows('employees.manage'))
+                            <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
+                                <i class="fas fa-id-card"></i>
+                                Data Pegawai
+                            </a>
+                            @endif
+                            @if(\App\Support\Access::allows('assessments.manage'))
+                            <a class="nav-link {{ request()->routeIs('performance', 'assessments.*') ? 'active' : '' }}" href="{{ route('performance') }}">
+                                <i class="fas fa-clipboard-check"></i>
+                                Penilaian Kinerja
+                            </a>
+                            @endif
+                        </div>
+                    </div>
                     @endif
-                    @if(\App\Support\Access::allows('employees.view') || \App\Support\Access::allows('employees.manage'))
-                    <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
-                        <i class="fas fa-users me-2"></i>
-                        Data Pegawai
-                    </a>
-                    @endif
-                    @if(\App\Support\Access::allows('master-data.manage'))
-                    <a class="nav-link {{ request()->routeIs('positions-competencies') ? 'active' : '' }}" href="{{ route('positions-competencies') }}">
-                        <i class="fas fa-sitemap me-2"></i>
-                        Jabatan & Kompetensi
-                    </a>
-                    @endif
-                    @if(\App\Support\Access::allows('assessments.manage'))
-                    <a class="nav-link {{ request()->routeIs('performance', 'assessments.*') ? 'active' : '' }}" href="{{ route('performance') }}">
-                        <i class="fas fa-clipboard-check me-2"></i>
-                        Penilaian Kinerja
-                    </a>
-                    @endif
+
                     @if(\App\Support\Access::allows('training-needs.view') || \App\Support\Access::allows('training-needs.manage'))
-                    <a class="nav-link {{ request()->routeIs('training-needs.index', 'training-needs.show') ? 'active' : '' }}" href="{{ route('training-needs.index') }}">
-                        <i class="fas fa-magnifying-glass-chart me-2"></i>
+                    <div class="sidebar-section-label">Proses</div>
+                    <button class="sidebar-group-toggle {{ $trainingMenuActive ? 'active' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#trainingMenu" aria-expanded="{{ $trainingMenuActive ? 'true' : 'false' }}" aria-controls="trainingMenu">
+                        <i class="fas fa-magnifying-glass-chart"></i>
+                        TNA & Pelatihan
+                        <i class="fas fa-chevron-down sidebar-chevron"></i>
+                    </button>
+                    <div class="collapse {{ $trainingMenuActive ? 'show' : '' }}" id="trainingMenu">
+                        <div class="sidebar-submenu">
+                            <a class="nav-link {{ request()->routeIs('training-needs.index', 'training-needs.show') ? 'active' : '' }}" href="{{ route('training-needs.index') }}">
+                                <i class="fas fa-chart-line"></i>
                         Analisis TNA
-                    </a>
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('training-recommendations') ? 'active' : '' }}" href="{{ route('training-recommendations') }}">
+                                <i class="fas fa-graduation-cap"></i>
+                                Rekomendasi
+                            </a>
+                            @if(\App\Support\Access::allows('training-needs.manage'))
+                            <a class="nav-link {{ request()->routeIs('training-plans') ? 'active' : '' }}" href="{{ route('training-plans') }}">
+                                <i class="fas fa-calendar-check"></i>
+                                Perencanaan
+                            </a>
+                            @endif
+                            @if(\App\Support\Access::allows('reports.view'))
+                            <a class="nav-link {{ request()->routeIs('training-needs.report') ? 'active' : '' }}" href="{{ route('training-needs.report') }}">
+                                <i class="fas fa-chart-bar"></i>
+                                Laporan
+                            </a>
+                            @endif
+                        </div>
+                    </div>
                     @endif
-                    @if(\App\Support\Access::allows('training-needs.view') || \App\Support\Access::allows('training-needs.manage'))
-                    <a class="nav-link {{ request()->routeIs('training-recommendations') ? 'active' : '' }}" href="{{ route('training-recommendations') }}">
-                        <i class="fas fa-graduation-cap me-2"></i>
-                        Rekomendasi Pelatihan
-                    </a>
-                    @endif
-                    @if(\App\Support\Access::allows('training-needs.manage'))
-                    <a class="nav-link {{ request()->routeIs('training-plans') ? 'active' : '' }}" href="{{ route('training-plans') }}">
-                        <i class="fas fa-calendar-check me-2"></i>
-                        Perencanaan Pelatihan
-                    </a>
-                    @endif
-                    @if(\App\Support\Access::allows('reports.view'))
-                    <a class="nav-link {{ request()->routeIs('training-needs.report') ? 'active' : '' }}" href="{{ route('training-needs.report') }}">
-                        <i class="fas fa-chart-bar me-2"></i>
-                        Laporan
-                    </a>
-                    @endif
-                    @if(\App\Support\Access::allows('master-data.manage'))
-                    <a class="nav-link {{ request()->routeIs('master-data') ? 'active' : '' }}" href="{{ route('master-data') }}">
-                        <i class="fas fa-database me-2"></i>
-                        Master Data
-                    </a>
-                    @endif
-                    <a class="nav-link {{ request()->routeIs('system-flow') ? 'active' : '' }}" href="{{ route('system-flow') }}">
-                        <i class="fas fa-route me-2"></i>
-                        Alur Sistem
-                    </a>
+
+                    <div class="sidebar-section-label">Sistem</div>
+                    <button class="sidebar-group-toggle {{ $settingsMenuActive ? 'active' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#settingsMenu" aria-expanded="{{ $settingsMenuActive ? 'true' : 'false' }}" aria-controls="settingsMenu">
+                        <i class="fas fa-sliders"></i>
+                        Pengaturan
+                        <i class="fas fa-chevron-down sidebar-chevron"></i>
+                    </button>
+                    <div class="collapse {{ $settingsMenuActive ? 'show' : '' }}" id="settingsMenu">
+                        <div class="sidebar-submenu">
+                            @if(\App\Support\Access::allows('master-data.manage'))
+                            <a class="nav-link {{ request()->routeIs('users-management') ? 'active' : '' }}" href="{{ route('users-management') }}">
+                                <i class="fas fa-user-shield"></i>
+                                Pengguna & Role
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('positions-competencies') ? 'active' : '' }}" href="{{ route('positions-competencies') }}">
+                                <i class="fas fa-sitemap"></i>
+                                Jabatan & Kompetensi
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('master-data') ? 'active' : '' }}" href="{{ route('master-data') }}">
+                                <i class="fas fa-database"></i>
+                                Master Data
+                            </a>
+                            @endif
+                            <a class="nav-link {{ request()->routeIs('system-flow') ? 'active' : '' }}" href="{{ route('system-flow') }}">
+                                <i class="fas fa-route"></i>
+                                Alur Sistem
+                            </a>
+                        </div>
+                    </div>
                 </nav>
+
+                <div class="sidebar-footer">
+                    <div class="sidebar-user">
+                        <div class="fw-bold">{{ $currentUser?->name ?? 'Admin Demo' }}</div>
+                        <small>{{ $currentUser?->role_label ?? 'Mode tanpa login' }}</small>
+                    </div>
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="logout-button">
+                            <i class="fas fa-right-from-bracket"></i>
+                            Logout
+                        </button>
+                    </form>
+                </div>
             </div>
         </aside>
 

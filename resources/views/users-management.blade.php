@@ -59,7 +59,7 @@
         <h5 class="mb-0"><i class="fas fa-users me-2"></i>Daftar User & Role</h5>
     </div>
     <div class="card-body table-responsive">
-        <table class="soft-table">
+        <table class="soft-table js-data-table" data-page-length="10" data-order="[[2,&quot;asc&quot;]]">
             <thead>
                 <tr>
                     <th>Nama</th>
@@ -96,7 +96,7 @@
         <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Matriks Role & Hak Akses</h5>
     </div>
     <div class="card-body table-responsive">
-        <table class="soft-table">
+        <table class="soft-table js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
             <thead>
                 <tr>
                     <th>Role</th>

@@ -80,7 +80,7 @@
                 <h5 class="mb-0"><i class="fas fa-table me-2"></i>Konversi Capaian Kinerja ke Skor C1</h5>
             </div>
             <div class="card-body table-responsive">
-                <table class="soft-table">
+                <table class="soft-table js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
                     <thead>
                         <tr>
                             <th>Nilai Capaian</th>

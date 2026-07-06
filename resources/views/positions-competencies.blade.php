@@ -84,7 +84,7 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="soft-table">
+                    <table class="soft-table js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
                         <thead>
                             <tr>
                                 <th>Level</th>

@@ -16,8 +16,17 @@ function initDataTables() {
             responsive: true,
             pageLength: Number(table.dataset.pageLength || 10),
             order: table.dataset.order ? JSON.parse(table.dataset.order) : [],
+            autoWidth: false,
+            stateSave: table.dataset.stateSave === 'true',
+            layout: {
+                topStart: 'pageLength',
+                topEnd: 'search',
+                bottomStart: 'info',
+                bottomEnd: 'paging',
+            },
             language: {
                 search: 'Cari:',
+                searchPlaceholder: 'Ketik kata kunci...',
                 lengthMenu: 'Tampilkan _MENU_ data',
                 info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
                 infoEmpty: 'Tidak ada data',
@@ -37,3 +46,10 @@ function initDataTables() {
 
 document.addEventListener('DOMContentLoaded', initDataTables);
 document.addEventListener('livewire:navigated', initDataTables);
+document.addEventListener('livewire:updated', () => setTimeout(initDataTables, 0));
+
+document.addEventListener('livewire:init', () => {
+    if (window.Livewire?.hook) {
+        window.Livewire.hook('morph.updated', () => setTimeout(initDataTables, 0));
+    }
+});

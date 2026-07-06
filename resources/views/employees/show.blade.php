@@ -188,7 +188,7 @@
             <div class="card-body">
                 @if($employee->trainingHistories->count() > 0)
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle">
+                        <table class="table table-hover align-middle js-data-table" data-page-length="5" data-order="[[3,&quot;desc&quot;]]">
                             <thead>
                                 <tr>
                                     <th>Pelatihan</th>

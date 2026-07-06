@@ -19,8 +19,7 @@ class AssessmentController extends Controller
                 $query->where('employee_id', $employeeId);
             })
             ->orderBy('assessment_date', 'desc')
-            ->paginate(15)
-            ->withQueryString();
+            ->get();
 
         $employees = Employee::orderBy('name')->get();
         

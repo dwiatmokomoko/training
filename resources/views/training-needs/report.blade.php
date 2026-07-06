@@ -116,7 +116,7 @@
                 <h6>Kriteria Perhitungan dan Skala Nilai</h6>
                 <p>Tahap awal seperti contoh: sistem menyiapkan kriteria, atribut, bobot, sumber data, dan konversi skor.</p>
             </div>
-            <table class="table table-sm table-hover align-middle">
+            <table class="table table-sm table-hover align-middle js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
                 <thead class="table-light">
                     <tr>
                         <th>Kode</th>
@@ -154,7 +154,7 @@
                 <h6>Matriks Keputusan (X)</h6>
                 <p>Nilai mentah setiap pegawai sebelum normalisasi. Angka diambil dari assessment dan data pegawai.</p>
             </div>
-            <table class="table table-sm table-hover align-middle">
+            <table class="table table-sm table-hover align-middle js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
                 <thead class="table-light">
                     <tr>
                         <th>Alternatif</th>
@@ -206,7 +206,7 @@
                 <h6>Hasil Normalisasi (R)</h6>
                 <p>Nilai R diperoleh dari rumus benefit/cost per kolom kriteria, kemudian dikalikan bobot.</p>
             </div>
-            <table class="table table-sm table-hover align-middle">
+            <table class="table table-sm table-hover align-middle js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
                 <thead class="table-light">
                     <tr>
                         <th>Preferensi</th>
@@ -249,7 +249,7 @@
                 <h6>Perhitungan Nilai Preferensi (V)</h6>
                 <p>Setiap nilai normalisasi dikalikan bobot, lalu dijumlahkan untuk mendapatkan skor akhir.</p>
             </div>
-            <table class="table table-sm table-hover align-middle">
+            <table class="table table-sm table-hover align-middle js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
                 <thead class="table-light">
                     <tr>
                         <th>Alternatif</th>
@@ -283,7 +283,7 @@
                 <h6>Hasil Perangkingan Prioritas</h6>
                 <p>Nilai V tertinggi menjadi prioritas pertama untuk rekomendasi pelatihan.</p>
             </div>
-            <table class="table table-sm table-striped align-middle">
+            <table class="table table-sm table-striped align-middle js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
                 <thead class="table-dark">
                     <tr>
                         <th>Rank</th>

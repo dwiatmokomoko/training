@@ -1149,6 +1149,48 @@
         .dashboard-wrapper .info-card:hover {
             transform: none;
         }
+
+        .dashboard-wrapper .card-header-modern {
+            background: #ffffff;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--line);
+            padding: 1rem 1.15rem;
+        }
+
+        .dashboard-wrapper .header-icon,
+        .dashboard-wrapper .action-icon,
+        .dashboard-wrapper .stats-icon,
+        .dashboard-wrapper .employee-avatar {
+            background: var(--ma-light-green) !important;
+            color: var(--ma-dark-green) !important;
+        }
+
+        .dashboard-wrapper .header-subtitle,
+        .dashboard-wrapper .action-desc {
+            color: var(--text-muted);
+            opacity: 1;
+        }
+
+        .dashboard-wrapper .analysis-btn,
+        .dashboard-wrapper .score-fill,
+        .dashboard-wrapper .criteria-fill,
+        .dashboard-wrapper .level-bar div {
+            background: var(--ma-green) !important;
+        }
+
+        .dashboard-wrapper .results-badge,
+        .dashboard-wrapper .position-tag {
+            background: var(--ma-light-yellow) !important;
+            color: #5f4614 !important;
+        }
+
+        .dashboard-wrapper .analysis-card,
+        .dashboard-wrapper .criteria-card,
+        .dashboard-wrapper .actions-card,
+        .dashboard-wrapper .info-card,
+        .dashboard-wrapper .stats-card {
+            border: 1px solid var(--line);
+        }
     </style>
 
     <script>

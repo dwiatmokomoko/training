@@ -237,7 +237,7 @@
             </div>
 
             <div class="table-responsive data-table-shell">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
                     <thead class="table-light">
                         <tr>
                             <th>Input</th>
