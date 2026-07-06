@@ -68,6 +68,40 @@
             line-height: 1.7;
         }
 
+        .saw-highlights {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.8rem;
+            max-width: 720px;
+            margin-top: 2rem;
+        }
+
+        .saw-highlight {
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 12px;
+            padding: 0.85rem;
+            background: rgba(255,255,255,0.06);
+        }
+
+        .saw-highlight i {
+            color: var(--ma-yellow);
+            margin-bottom: 0.65rem;
+        }
+
+        .saw-highlight strong {
+            display: block;
+            font-size: 0.9rem;
+            color: #ffffff;
+        }
+
+        .saw-highlight span {
+            display: block;
+            margin-top: 0.25rem;
+            color: rgba(255,255,255,0.64);
+            font-size: 0.78rem;
+            line-height: 1.45;
+        }
+
         .login-panel {
             display: flex;
             align-items: center;
@@ -152,6 +186,10 @@
             .login-panel {
                 padding: 1.5rem;
             }
+
+            .saw-highlights {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -166,8 +204,25 @@
                         <small class="text-white-50">Mahkamah Agung</small>
                     </div>
                 </div>
-                <h1>Analisis kebutuhan pelatihan berbasis role.</h1>
-                <p>Admin, petugas kepegawaian, dan pimpinan masuk dengan akun masing-masing agar input data, analisis, approval, dan laporan berjalan sesuai kewenangan.</p>
+                <h1>Prioritas pelatihan berbasis metode SAW.</h1>
+                <p>Sistem menghitung kebutuhan pelatihan dari gap kompetensi, bobot kriteria, dan nilai pegawai untuk menghasilkan ranking rekomendasi yang objektif.</p>
+                <div class="saw-highlights">
+                    <div class="saw-highlight">
+                        <i class="fas fa-scale-balanced"></i>
+                        <strong>Bobot kriteria</strong>
+                        <span>Kompetensi dan kinerja dinilai sesuai tingkat kepentingan.</span>
+                    </div>
+                    <div class="saw-highlight">
+                        <i class="fas fa-chart-simple"></i>
+                        <strong>Normalisasi</strong>
+                        <span>Nilai diolah agar setiap kriteria bisa dibandingkan adil.</span>
+                    </div>
+                    <div class="saw-highlight">
+                        <i class="fas fa-ranking-star"></i>
+                        <strong>Ranking TNA</strong>
+                        <span>Hasil akhir menjadi dasar prioritas pelatihan pegawai.</span>
+                    </div>
+                </div>
             </div>
             <small class="text-white-50">Sistem Analisa Kebutuhan Pelatihan</small>
         </section>
@@ -175,7 +230,7 @@
         <section class="login-panel">
             <div class="login-card">
                 <h2>Masuk</h2>
-                <p class="muted">Gunakan akun sesuai role pengguna.</p>
+                <p class="muted">Masuk untuk mengelola data TNA dan melihat hasil perhitungan SAW.</p>
 
                 @if(session('success'))
                     <div class="alert alert-success">{{ session('success') }}</div>
