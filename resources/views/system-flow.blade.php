@@ -104,7 +104,7 @@
 
     $modules = [
         ['menu' => 'Dashboard', 'plain' => 'Ringkasan gap kompetensi, pegawai per level, prioritas pelatihan, status rencana/realisasi, dan notifikasi.', 'route' => route('dashboard'), 'icon' => 'fa-tachometer-alt'],
-        ['menu' => 'Manajemen Pengguna', 'plain' => 'Akun pegawai, atasan, SDM, pimpinan, role RBAC, aktivasi, reset password, dan audit log.', 'route' => route('users-management'), 'icon' => 'fa-user-shield'],
+        ['menu' => 'Manajemen Pengguna', 'plain' => 'Akun admin, petugas kepegawaian, pimpinan/ketua, role RBAC, status aktif, dan hak akses modul.', 'route' => route('users-management'), 'icon' => 'fa-user-shield'],
         ['menu' => 'Data Pegawai', 'plain' => 'Profil NIP/NIK, jabatan, unit kerja, riwayat jabatan, pendidikan, pelatihan, dan dokumen pendukung.', 'route' => route('employees.index'), 'icon' => 'fa-users'],
         ['menu' => 'Jabatan & Standar Kompetensi', 'plain' => 'Master jabatan, kompetensi inti/manajerial/teknis/sosial kultural, level 1-5, dan bobot.', 'route' => route('positions-competencies'), 'icon' => 'fa-sitemap'],
         ['menu' => 'Penilaian Kinerja', 'plain' => 'Input nilai SKP, IKU, KPI, indikator per rumpun, dan pembobotan kinerja terhadap TNA.', 'route' => route('performance'), 'icon' => 'fa-clipboard-check'],
@@ -140,6 +140,30 @@
         'Analisis SAW sudah dijalankan ulang setelah ada perubahan data.',
         'Hasil ranking sudah diperiksa sebelum dicetak sebagai laporan.',
     ];
+
+    $roles = [
+        [
+            'role' => 'Admin',
+            'focus' => 'Mengelola sistem secara penuh.',
+            'permissions' => ['Semua modul', 'Manajemen pengguna', 'Master data', 'Data pegawai', 'Analisis SAW', 'Laporan'],
+            'note' => 'Dipakai untuk konfigurasi, koreksi data lintas modul, dan pengelolaan akun.',
+            'icon' => 'fa-user-shield',
+        ],
+        [
+            'role' => 'Petugas Kepegawaian',
+            'focus' => 'Menginput dan memelihara data operasional TNA.',
+            'permissions' => ['Data pegawai', 'Riwayat pelatihan', 'Penilaian', 'Jalankan SAW', 'Kelola rekomendasi', 'Laporan'],
+            'note' => 'Aktor utama untuk input riwayat pelatihan, assessment, dan menjalankan analisis.',
+            'icon' => 'fa-users-gear',
+        ],
+        [
+            'role' => 'Pimpinan/Ketua',
+            'focus' => 'Meninjau hasil dan mengambil keputusan.',
+            'permissions' => ['Dashboard', 'Lihat pegawai', 'Lihat hasil TNA', 'Approve/Reject rekomendasi', 'Laporan'],
+            'note' => 'Tidak menginput data; fokus pada monitoring, persetujuan, dan bahan keputusan.',
+            'icon' => 'fa-stamp',
+        ],
+    ];
 @endphp
 
 <div class="system-flow-page">
@@ -153,10 +177,12 @@
             </p>
         </div>
         <div class="flow-hero-actions">
+            @if(\App\Support\Access::allows('employees.manage'))
             <a href="{{ route('employees.create') }}" class="btn btn-primary">
                 <i class="fas fa-user-plus me-2"></i>
                 Mulai Input Pegawai
             </a>
+            @endif
             <a href="{{ route('training-needs.index') }}" class="btn btn-success">
                 <i class="fas fa-calculator me-2"></i>
                 Lihat Analisis
@@ -179,6 +205,39 @@
             <i class="fas fa-ranking-star"></i>
             <h6>Hasil Keluar</h6>
             <p>Sistem menampilkan ranking pegawai dan rekomendasi pelatihan prioritas.</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-user-lock me-2"></i>
+                Aktor, Login, dan Hak Akses
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="section-subtitle mb-3">
+                Setiap pengguna wajib login. Setelah login, sistem membaca role pengguna dan hanya menampilkan menu serta aksi yang sesuai kewenangannya.
+            </p>
+            <div class="role-flow-grid">
+                @foreach($roles as $role)
+                    <div class="role-flow-card">
+                        <div class="role-flow-head">
+                            <div class="role-flow-icon"><i class="fas {{ $role['icon'] }}"></i></div>
+                            <div>
+                                <h6>{{ $role['role'] }}</h6>
+                                <p>{{ $role['focus'] }}</p>
+                            </div>
+                        </div>
+                        <div class="role-permission-list">
+                            @foreach($role['permissions'] as $permission)
+                                <span>{{ $permission }}</span>
+                            @endforeach
+                        </div>
+                        <small>{{ $role['note'] }}</small>
+                    </div>
+                @endforeach
+            </div>
         </div>
     </div>
 
@@ -533,6 +592,69 @@
         gap: 1rem;
     }
 
+    .role-flow-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .role-flow-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1rem;
+        background: #fff;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .role-flow-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .role-flow-icon {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: var(--ma-light-green);
+        color: var(--ma-dark-green);
+        flex: 0 0 auto;
+    }
+
+    .role-flow-head h6 {
+        margin: 0;
+        font-weight: 850;
+    }
+
+    .role-flow-head p,
+    .role-flow-card small {
+        margin: 0.3rem 0 0;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .role-permission-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .role-permission-list span {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.55rem;
+        border-radius: 999px;
+        background: var(--ma-light-green);
+        color: var(--ma-dark-green);
+        font-size: 0.8rem;
+        font-weight: 750;
+    }
+
     .saw-process-card {
         border: 1px solid var(--line);
         border-radius: 12px;
@@ -861,7 +983,8 @@
         }
 
         .saw-process-grid,
-        .saw-formula-flow {
+        .saw-formula-flow,
+        .role-flow-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
@@ -882,7 +1005,8 @@
         }
 
         .saw-process-grid,
-        .saw-formula-flow {
+        .saw-formula-flow,
+        .role-flow-grid {
             grid-template-columns: 1fr;
         }
 
