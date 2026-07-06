@@ -11,7 +11,7 @@ class Access
         $user = Auth::user();
 
         if (! $user) {
-            return true;
+            return false;
         }
 
         return $user->hasPermission($permission);
