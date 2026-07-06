@@ -3,22 +3,29 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Position extends Model
 {
-    protected $guarded = [];
-
-    protected $casts = [
-        'is_active' => 'boolean',
+    protected $fillable = [
+        'job_family_id',
+        'name',
+        'description',
+        'level'
     ];
 
-    public function group()
+    protected $casts = [
+        'level' => 'string'
+    ];
+
+    public function jobFamily(): BelongsTo
     {
-        return $this->belongsTo(EmployeeGroup::class, 'employee_group_id');
+        return $this->belongsTo(JobFamily::class);
     }
 
-    public function unit()
+    public function employees(): HasMany
     {
-        return $this->belongsTo(WorkUnit::class, 'work_unit_id');
+        return $this->hasMany(Employee::class);
     }
 }

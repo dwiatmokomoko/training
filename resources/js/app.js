@@ -1,17 +1,21 @@
 import './bootstrap';
-
 import DataTable from 'datatables.net-dt';
+import 'datatables.net-responsive-dt';
 import 'datatables.net-dt/css/dataTables.dataTables.css';
+import 'datatables.net-responsive-dt/css/responsive.dataTables.css';
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('table.datatable').forEach((table) => {
-        if (table.dataset.datatableReady === 'true') {
+function initDataTables() {
+    document.querySelectorAll('.js-data-table').forEach((table) => {
+        if (table.dataset.dtInitialized === '1') {
             return;
         }
 
+        table.dataset.dtInitialized = '1';
+
         new DataTable(table, {
-            pageLength: 10,
-            order: [],
+            responsive: true,
+            pageLength: Number(table.dataset.pageLength || 10),
+            order: table.dataset.order ? JSON.parse(table.dataset.order) : [],
             language: {
                 search: 'Cari:',
                 lengthMenu: 'Tampilkan _MENU_ data',
@@ -21,14 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 zeroRecords: 'Data tidak ditemukan',
                 emptyTable: 'Belum ada data',
                 paginate: {
-                    first: 'Awal',
-                    last: 'Akhir',
+                    first: 'Pertama',
+                    last: 'Terakhir',
                     next: 'Berikutnya',
                     previous: 'Sebelumnya',
                 },
             },
         });
-
-        table.dataset.datatableReady = 'true';
     });
-});
+}
+
+document.addEventListener('DOMContentLoaded', initDataTables);
+document.addEventListener('livewire:navigated', initDataTables);
