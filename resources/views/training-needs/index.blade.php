@@ -39,19 +39,15 @@
     </div>
 </div>
 
-<div class="card mt-4">
-    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h5 class="mb-0">
+<details class="card mt-4 saw-details">
+    <summary>
+        <span>
             <i class="fas fa-square-root-variable me-2"></i>
             Tahapan Perhitungan SAW
-        </h5>
-        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#sawCalculationPanel" aria-expanded="false" aria-controls="sawCalculationPanel">
-            <i class="fas fa-eye me-2"></i>
-            Tampilkan / Sembunyikan
-        </button>
-    </div>
-    <div class="collapse" id="sawCalculationPanel">
-        <div class="card-body">
+        </span>
+        <small>klik untuk tampil/sembunyikan</small>
+    </summary>
+    <div class="card-body">
             <div class="saw-stage-grid mb-4">
                 <div class="saw-stage">
                     <span>1</span>
@@ -150,15 +146,43 @@
                     Lihat Alur Sistem
                 </a>
             </div>
-        </div>
     </div>
-</div>
+</details>
 
 <style>
     .saw-stage-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 1rem;
+    }
+
+    .saw-details summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid transparent;
+        list-style: none;
+    }
+
+    .saw-details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .saw-details[open] summary {
+        border-bottom-color: var(--line);
+    }
+
+    .saw-details summary span {
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .saw-details summary small {
+        color: var(--text-muted);
+        font-weight: 600;
     }
 
     .saw-stage {

@@ -96,7 +96,7 @@
         }
 
         .sidebar .nav-link,
-        .sidebar-group-toggle {
+        .sidebar-group-title {
             width: 100%;
             color: rgba(255,255,255,0.84);
             padding: 0.68rem 0.78rem;
@@ -114,21 +114,20 @@
 
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active,
-        .sidebar-group-toggle:hover,
-        .sidebar-group-toggle.active {
+        .sidebar-group-title.active {
             color: white;
             background-color: rgba(255,255,255,0.10);
             border-color: rgba(255,255,255,0.10);
         }
 
         .sidebar .nav-link.active,
-        .sidebar-group-toggle.active {
+        .sidebar-group-title.active {
             background: rgba(255,255,255,0.14);
             box-shadow: inset 3px 0 0 var(--ma-yellow);
         }
 
         .sidebar .nav-link i,
-        .sidebar-group-toggle i:first-child {
+        .sidebar-group-title i:first-child {
             color: #d9c38b;
             width: 20px;
             text-align: center;
@@ -137,7 +136,7 @@
         .sidebar-submenu {
             display: grid;
             gap: 0.2rem;
-            margin: 0.25rem 0 0.45rem 2rem;
+            margin: 0.3rem 0 0.45rem 0;
             padding-left: 0.55rem;
             border-left: 1px solid rgba(255,255,255,0.12);
         }
@@ -146,16 +145,6 @@
             font-size: 0.92rem;
             padding: 0.54rem 0.65rem;
             color: rgba(255,255,255,0.74);
-        }
-
-        .sidebar-chevron {
-            margin-left: auto;
-            transition: transform 0.18s ease;
-            color: rgba(255,255,255,0.58) !important;
-        }
-
-        .sidebar-group-toggle[aria-expanded="true"] .sidebar-chevron {
-            transform: rotate(180deg);
         }
 
         .sidebar-footer {
@@ -759,89 +748,80 @@
 
                     @if(\App\Support\Access::allows('employees.view') || \App\Support\Access::allows('employees.manage') || \App\Support\Access::allows('assessments.manage'))
                     <div class="sidebar-section-label">Data</div>
-                    <button class="sidebar-group-toggle {{ $employeeMenuActive ? 'active' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#employeeMenu" aria-expanded="{{ $employeeMenuActive ? 'true' : 'false' }}" aria-controls="employeeMenu">
+                    <div class="sidebar-group-title {{ $employeeMenuActive ? 'active' : '' }}">
                         <i class="fas fa-users"></i>
                         Kepegawaian
-                        <i class="fas fa-chevron-down sidebar-chevron"></i>
-                    </button>
-                    <div class="collapse {{ $employeeMenuActive ? 'show' : '' }}" id="employeeMenu">
-                        <div class="sidebar-submenu">
-                            @if(\App\Support\Access::allows('employees.view') || \App\Support\Access::allows('employees.manage'))
-                            <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
-                                <i class="fas fa-id-card"></i>
-                                Data Pegawai
-                            </a>
-                            @endif
-                            @if(\App\Support\Access::allows('assessments.manage'))
-                            <a class="nav-link {{ request()->routeIs('performance', 'assessments.*') ? 'active' : '' }}" href="{{ route('performance') }}">
-                                <i class="fas fa-clipboard-check"></i>
-                                Penilaian Kinerja
-                            </a>
-                            @endif
-                        </div>
+                    </div>
+                    <div class="sidebar-submenu">
+                        @if(\App\Support\Access::allows('employees.view') || \App\Support\Access::allows('employees.manage'))
+                        <a class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}" href="{{ route('employees.index') }}">
+                            <i class="fas fa-id-card"></i>
+                            Data Pegawai
+                        </a>
+                        @endif
+                        @if(\App\Support\Access::allows('assessments.manage'))
+                        <a class="nav-link {{ request()->routeIs('performance', 'assessments.*') ? 'active' : '' }}" href="{{ route('performance') }}">
+                            <i class="fas fa-clipboard-check"></i>
+                            Penilaian Kinerja
+                        </a>
+                        @endif
                     </div>
                     @endif
 
                     @if(\App\Support\Access::allows('training-needs.view') || \App\Support\Access::allows('training-needs.manage'))
                     <div class="sidebar-section-label">Proses</div>
-                    <button class="sidebar-group-toggle {{ $trainingMenuActive ? 'active' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#trainingMenu" aria-expanded="{{ $trainingMenuActive ? 'true' : 'false' }}" aria-controls="trainingMenu">
+                    <div class="sidebar-group-title {{ $trainingMenuActive ? 'active' : '' }}">
                         <i class="fas fa-magnifying-glass-chart"></i>
                         TNA & Pelatihan
-                        <i class="fas fa-chevron-down sidebar-chevron"></i>
-                    </button>
-                    <div class="collapse {{ $trainingMenuActive ? 'show' : '' }}" id="trainingMenu">
-                        <div class="sidebar-submenu">
-                            <a class="nav-link {{ request()->routeIs('training-needs.index', 'training-needs.show') ? 'active' : '' }}" href="{{ route('training-needs.index') }}">
-                                <i class="fas fa-chart-line"></i>
-                        Analisis TNA
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('training-recommendations') ? 'active' : '' }}" href="{{ route('training-recommendations') }}">
-                                <i class="fas fa-graduation-cap"></i>
-                                Rekomendasi
-                            </a>
-                            @if(\App\Support\Access::allows('training-needs.manage'))
-                            <a class="nav-link {{ request()->routeIs('training-plans') ? 'active' : '' }}" href="{{ route('training-plans') }}">
-                                <i class="fas fa-calendar-check"></i>
-                                Perencanaan
-                            </a>
-                            @endif
-                            @if(\App\Support\Access::allows('reports.view'))
-                            <a class="nav-link {{ request()->routeIs('training-needs.report') ? 'active' : '' }}" href="{{ route('training-needs.report') }}">
-                                <i class="fas fa-chart-bar"></i>
-                                Laporan
-                            </a>
-                            @endif
-                        </div>
+                    </div>
+                    <div class="sidebar-submenu">
+                        <a class="nav-link {{ request()->routeIs('training-needs.index', 'training-needs.show') ? 'active' : '' }}" href="{{ route('training-needs.index') }}">
+                            <i class="fas fa-chart-line"></i>
+                            Analisis TNA
+                        </a>
+                        <a class="nav-link {{ request()->routeIs('training-recommendations') ? 'active' : '' }}" href="{{ route('training-recommendations') }}">
+                            <i class="fas fa-graduation-cap"></i>
+                            Rekomendasi
+                        </a>
+                        @if(\App\Support\Access::allows('training-needs.manage'))
+                        <a class="nav-link {{ request()->routeIs('training-plans') ? 'active' : '' }}" href="{{ route('training-plans') }}">
+                            <i class="fas fa-calendar-check"></i>
+                            Perencanaan
+                        </a>
+                        @endif
+                        @if(\App\Support\Access::allows('reports.view'))
+                        <a class="nav-link {{ request()->routeIs('training-needs.report') ? 'active' : '' }}" href="{{ route('training-needs.report') }}">
+                            <i class="fas fa-chart-bar"></i>
+                            Laporan
+                        </a>
+                        @endif
                     </div>
                     @endif
 
                     <div class="sidebar-section-label">Sistem</div>
-                    <button class="sidebar-group-toggle {{ $settingsMenuActive ? 'active' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#settingsMenu" aria-expanded="{{ $settingsMenuActive ? 'true' : 'false' }}" aria-controls="settingsMenu">
+                    <div class="sidebar-group-title {{ $settingsMenuActive ? 'active' : '' }}">
                         <i class="fas fa-sliders"></i>
                         Pengaturan
-                        <i class="fas fa-chevron-down sidebar-chevron"></i>
-                    </button>
-                    <div class="collapse {{ $settingsMenuActive ? 'show' : '' }}" id="settingsMenu">
-                        <div class="sidebar-submenu">
-                            @if(\App\Support\Access::allows('master-data.manage'))
-                            <a class="nav-link {{ request()->routeIs('users-management') ? 'active' : '' }}" href="{{ route('users-management') }}">
-                                <i class="fas fa-user-shield"></i>
-                                Pengguna & Role
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('positions-competencies') ? 'active' : '' }}" href="{{ route('positions-competencies') }}">
-                                <i class="fas fa-sitemap"></i>
-                                Jabatan & Kompetensi
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('master-data') ? 'active' : '' }}" href="{{ route('master-data') }}">
-                                <i class="fas fa-database"></i>
-                                Master Data
-                            </a>
-                            @endif
-                            <a class="nav-link {{ request()->routeIs('system-flow') ? 'active' : '' }}" href="{{ route('system-flow') }}">
-                                <i class="fas fa-route"></i>
-                                Alur Sistem
-                            </a>
-                        </div>
+                    </div>
+                    <div class="sidebar-submenu">
+                        @if(\App\Support\Access::allows('master-data.manage'))
+                        <a class="nav-link {{ request()->routeIs('users-management') ? 'active' : '' }}" href="{{ route('users-management') }}">
+                            <i class="fas fa-user-shield"></i>
+                            Pengguna & Role
+                        </a>
+                        <a class="nav-link {{ request()->routeIs('positions-competencies') ? 'active' : '' }}" href="{{ route('positions-competencies') }}">
+                            <i class="fas fa-sitemap"></i>
+                            Jabatan & Kompetensi
+                        </a>
+                        <a class="nav-link {{ request()->routeIs('master-data') ? 'active' : '' }}" href="{{ route('master-data') }}">
+                            <i class="fas fa-database"></i>
+                            Master Data
+                        </a>
+                        @endif
+                        <a class="nav-link {{ request()->routeIs('system-flow') ? 'active' : '' }}" href="{{ route('system-flow') }}">
+                            <i class="fas fa-route"></i>
+                            Alur Sistem
+                        </a>
                     </div>
                 </nav>
 
