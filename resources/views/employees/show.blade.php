@@ -9,6 +9,7 @@
     $canManageEmployees = \App\Support\Access::allows('employees.manage');
     $canManageTrainingHistory = \App\Support\Access::allows('training-history.manage');
     $latestTrainingDate = $employee->latest_training_date;
+    $trainingCatalog = \App\Support\TrainingCatalog::grouped();
 @endphp
 
 <div class="toolbar-panel mb-3">
@@ -291,46 +292,53 @@
                     <div class="row g-3">
                         <div class="col-md-8">
                             <label for="training_name" class="form-label">Nama Pelatihan <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="training_name" name="training_name" required>
+                            <select class="form-select @error('training_name') is-invalid @enderror" id="training_name" name="training_name" required>
+                                <option value="">Pilih dari referensi pelatihan</option>
+                                @foreach($trainingCatalog as $category => $items)
+                                    <optgroup label="{{ $category }}">
+                                        @foreach($items as $item)
+                                            <option value="{{ $item }}" {{ old('training_name') === $item ? 'selected' : '' }}>{{ $item }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                            @error('training_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-4">
-                            <label for="category" class="form-label">Kategori</label>
-                            <select class="form-select" id="category" name="category">
-                                <option value="">Pilih kategori</option>
-                                <option value="Teknis Yudisial">Teknis Yudisial</option>
-                                <option value="Kepaniteraan">Kepaniteraan</option>
-                                <option value="Kesekretariatan">Kesekretariatan</option>
-                                <option value="Manajerial">Manajerial</option>
-                                <option value="E-Learning">E-Learning</option>
-                            </select>
+                            <label class="form-label">Kategori</label>
+                            <div class="form-control-plaintext border rounded px-3 py-2 bg-light text-muted">
+                                Otomatis dari kelompok referensi
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label for="provider" class="form-label">Penyelenggara</label>
-                            <input type="text" class="form-control" id="provider" name="provider">
+                            <input type="text" class="form-control" id="provider" name="provider" value="{{ old('provider') }}">
                         </div>
                         <div class="col-md-3">
                             <label for="start_date" class="form-label">Tanggal Mulai</label>
-                            <input type="date" class="form-control" id="start_date" name="start_date">
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ old('start_date') }}">
                         </div>
                         <div class="col-md-3">
                             <label for="end_date" class="form-label">Tanggal Selesai</label>
-                            <input type="date" class="form-control" id="end_date" name="end_date">
+                            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ old('end_date') }}">
                         </div>
                         <div class="col-md-3">
                             <label for="hours" class="form-label">Jumlah JP</label>
-                            <input type="number" class="form-control" id="hours" name="hours" min="1" max="1000">
+                            <input type="number" class="form-control" id="hours" name="hours" min="1" max="1000" value="{{ old('hours') }}">
                         </div>
                         <div class="col-md-5">
                             <label for="certificate_number" class="form-label">Nomor Sertifikat</label>
-                            <input type="text" class="form-control" id="certificate_number" name="certificate_number">
+                            <input type="text" class="form-control" id="certificate_number" name="certificate_number" value="{{ old('certificate_number') }}">
                         </div>
                         <div class="col-md-4">
                             <label for="result" class="form-label">Hasil/Kelulusan</label>
-                            <input type="text" class="form-control" id="result" name="result" placeholder="Lulus / Selesai / Nilai">
+                            <input type="text" class="form-control" id="result" name="result" placeholder="Lulus / Selesai / Nilai" value="{{ old('result') }}">
                         </div>
                         <div class="col-12">
                             <label for="notes" class="form-label">Catatan</label>
-                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                            <textarea class="form-control" id="notes" name="notes" rows="3">{{ old('notes') }}</textarea>
                         </div>
                     </div>
                 </div>

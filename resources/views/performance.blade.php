@@ -59,6 +59,33 @@
     </div>
 </div>
 
+<div class="module-card mb-4">
+    <div class="module-card-head">
+        <div class="module-card-icon"><i class="fas fa-arrow-right-to-bracket"></i></div>
+        <div>
+            <h6>Aksi Penilaian</h6>
+            <p>Gunakan modul assessment yang sudah ada untuk input nilai pegawai satu per satu atau massal.</p>
+        </div>
+    </div>
+    <div class="row g-2">
+        <div class="col-md-4">
+            <a href="{{ route('assessments.index') }}" class="btn btn-primary w-100">
+                <i class="fas fa-list me-2"></i>Daftar Assessment
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{{ route('assessments.create') }}" class="btn btn-success w-100">
+                <i class="fas fa-plus me-2"></i>Input Assessment
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{{ route('assessments.bulk-create') }}" class="btn btn-outline-primary w-100">
+                <i class="fas fa-layer-group me-2"></i>Input Massal
+            </a>
+        </div>
+    </div>
+</div>
+
 <div class="module-grid mb-4">
     @foreach($flows as $flow)
         <div class="module-card">
@@ -74,7 +101,7 @@
 </div>
 
 <div class="row g-4">
-    <div class="col-lg-7">
+    <div class="col-12">
         <div class="card h-100">
             <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-table me-2"></i>Konversi Capaian Kinerja ke Skor C1</h5>
@@ -100,28 +127,6 @@
                         @endforeach
                     </tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-5">
-        <div class="module-card h-100">
-            <div class="module-card-head">
-                <div class="module-card-icon"><i class="fas fa-arrow-right-to-bracket"></i></div>
-                <div>
-                    <h6>Aksi Penilaian</h6>
-                    <p>Gunakan modul assessment yang sudah ada untuk input nilai pegawai satu per satu atau massal.</p>
-                </div>
-            </div>
-            <div class="d-grid gap-2">
-                <a href="{{ route('assessments.index') }}" class="btn btn-primary">
-                    <i class="fas fa-list me-2"></i>Daftar Assessment
-                </a>
-                <a href="{{ route('assessments.create') }}" class="btn btn-success">
-                    <i class="fas fa-plus me-2"></i>Input Assessment
-                </a>
-                <a href="{{ route('assessments.bulk-create') }}" class="btn btn-outline-primary">
-                    <i class="fas fa-layer-group me-2"></i>Input Massal
-                </a>
             </div>
         </div>
     </div>

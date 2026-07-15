@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\TrainingHistory;
 use App\Support\Access;
+use App\Support\TrainingCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class TrainingHistoryController extends Controller
 {
@@ -15,9 +17,8 @@ class TrainingHistoryController extends Controller
         Access::denyIfCannot('training-history.manage');
 
         $validated = $request->validate([
-            'training_name' => 'required|string|max:255',
+            'training_name' => ['required', 'string', 'max:255', Rule::in(TrainingCatalog::names())],
             'provider' => 'nullable|string|max:255',
-            'category' => 'nullable|string|max:100',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'hours' => 'nullable|integer|min:1|max:1000',
@@ -25,6 +26,8 @@ class TrainingHistoryController extends Controller
             'result' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ]);
+
+        $validated['category'] = TrainingCatalog::categoryFor($validated['training_name']);
 
         $employee->trainingHistories()->create($validated + [
             'created_by' => Auth::id(),

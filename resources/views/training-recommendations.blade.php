@@ -6,12 +6,7 @@
 
 @section('content')
 @php
-    $catalog = [
-        'Hakim' => ['Sertifikasi Hakim Tipikor', 'Sertifikasi Hakim Lingkungan Hidup', 'Sertifikasi Hakim Anak', 'Sertifikasi Hakim Niaga', 'Sertifikasi Hakim Mediator', 'Bimtek Penyusunan Putusan'],
-        'Panitera/Panitera Pengganti' => ['Pelatihan Teknis Yustisial', 'Administrasi Perkara Perdata dan Pidana', 'SIPP', 'e-Court dan e-Litigation', 'Sertifikasi Panitera/Panitera Pengganti', 'Minutasi dan Arsip Perkara'],
-        'Jurusita' => ['Teknis Pemanggilan dan Pemberitahuan', 'Eksekusi Putusan Pengadilan', 'e-Court dan e-Summons', 'Sertifikasi Jurusita', 'Komunikasi Efektif dan Pelayanan Publik'],
-        'Kesekretariatan' => ['PKA/PKN', 'SAKTI dan DIPA', 'PBJ Sertifikasi LKPP', 'BMN', 'SAKIP', 'Kearsipan dan Tata Naskah Dinas', 'IKPA'],
-    ];
+    $catalog = \App\Support\TrainingCatalog::grouped();
     $methods = ['Klasikal', 'E-learning', 'Coaching', 'Bimbingan teknis', 'Sertifikasi'];
 @endphp
 
