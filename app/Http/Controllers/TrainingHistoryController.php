@@ -55,7 +55,7 @@ class TrainingHistoryController extends Controller
 
     private function syncLastTrainingDate(Employee $employee): void
     {
-        $latestDate = $employee->trainingHistories()
+        $latestDate = TrainingHistory::where('employee_id', $employee->id)
             ->selectRaw('MAX(COALESCE(end_date, start_date)) as latest_date')
             ->value('latest_date');
 
