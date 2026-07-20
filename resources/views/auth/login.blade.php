@@ -35,21 +35,31 @@
             flex-direction: column;
             justify-content: space-between;
             padding: 3rem;
-            background: #0b2f21;
+            background:
+                linear-gradient(90deg, rgba(11,47,33,0.94), rgba(11,47,33,0.78)),
+                var(--login-hero-image);
+            background-size: cover;
+            background-position: center;
             color: white;
         }
 
         .brand-mark {
-            width: 54px;
-            height: 54px;
+            width: 64px;
+            height: 64px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            background: var(--ma-yellow);
-            color: var(--ma-dark-green);
-            font-weight: 900;
-            font-size: 1.25rem;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.94);
+            padding: 0.36rem;
+            box-shadow: 0 14px 32px rgba(0,0,0,0.22);
+            overflow: hidden;
+        }
+
+        .brand-mark img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .login-brand h1 {
@@ -194,11 +204,13 @@
     </style>
 </head>
 <body>
-    <main class="login-shell">
+    <main class="login-shell" style="--login-hero-image: url('{{ asset('storage/FOTO%20GEDUNG.png') }}');">
         <section class="login-brand">
             <div>
                 <div class="d-flex align-items-center gap-3">
-                    <div class="brand-mark">MA</div>
+                    <div class="brand-mark">
+                        <img src="{{ asset('storage/logo%20pn.png') }}" alt="Logo Pengadilan Negeri">
+                    </div>
                     <div>
                         <h5 class="mb-0 fw-bold">TNA System</h5>
                         <small class="text-white-50">Mahkamah Agung</small>

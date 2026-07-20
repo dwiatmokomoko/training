@@ -265,16 +265,23 @@
         }
         
         .logo-ma {
-            width: 40px;
-            height: 40px;
-            background: var(--ma-yellow);
-            border-radius: 50%;
-            display: flex;
+            width: 44px;
+            height: 44px;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: var(--ma-green);
-            font-weight: bold;
-            font-size: 18px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.94);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.16);
+            padding: 0.25rem;
+            overflow: hidden;
+            flex: 0 0 auto;
+        }
+
+        .logo-ma img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .header-gradient {
@@ -726,7 +733,9 @@
             <div class="sidebar p-3">
                 <div class="sidebar-brand mb-4">
                     <div class="d-flex align-items-center">
-                        <div class="logo-ma me-2">MA</div>
+                        <div class="logo-ma me-2">
+                            <img src="{{ asset('storage/logo%20pn.png') }}" alt="Logo Pengadilan Negeri">
+                        </div>
                         <div>
                             <h6 class="text-white mb-0">TNA System</h6>
                             <small class="text-white-50">Mahkamah Agung</small>
