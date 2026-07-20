@@ -49,17 +49,13 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 14px;
-            background: rgba(255,255,255,0.94);
-            padding: 0.36rem;
-            box-shadow: 0 14px 32px rgba(0,0,0,0.22);
-            overflow: hidden;
         }
 
         .brand-mark img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            filter: drop-shadow(0 8px 14px rgba(0,0,0,0.28));
         }
 
         .login-brand h1 {

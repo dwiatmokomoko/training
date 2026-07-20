@@ -270,11 +270,6 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.94);
-            box-shadow: 0 8px 18px rgba(0,0,0,0.16);
-            padding: 0.25rem;
-            overflow: hidden;
             flex: 0 0 auto;
         }
 
@@ -282,6 +277,7 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.24));
         }
         
         .header-gradient {
