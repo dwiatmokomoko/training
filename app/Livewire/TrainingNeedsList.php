@@ -2,29 +2,29 @@
 
 namespace App\Livewire;
 
+use App\Models\Employee;
 use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\TrainingNeed;
 use App\Services\SAWService;
 use App\Support\Access;
 
 class TrainingNeedsList extends Component
 {
-    use WithPagination;
-
-    public $statusFilter = '';
-    public $search = '';
+    public string $jobFamilyFilter = 'HK';
+    public string $trainingTypeFilter = '';
+    public string $periodFilter = '';
+    public int $quota = 10;
 
     protected $listeners = ['refreshTrainingNeeds' => '$refresh'];
 
-    public function updatingSearch()
+    public function mount(): void
     {
-        $this->resetPage();
+        $this->periodFilter = (string) now()->year;
     }
 
-    public function updatingStatusFilter()
+    public function showFilteredData(): void
     {
-        $this->resetPage();
+        $this->dispatch('trainingNeedsFiltered');
     }
 
     public function updateStatus($trainingNeedId, $status, $notes = null)
@@ -66,7 +66,6 @@ class TrainingNeedsList extends Component
         $sawService->saveTrainingNeeds($results);
 
         session()->flash('success', 'Analisis SAW berhasil dijalankan dan daftar prioritas diperbarui.');
-        $this->resetPage();
     }
 
     public function render()
@@ -74,27 +73,108 @@ class TrainingNeedsList extends Component
         $query = TrainingNeed::with(['employee.position.jobFamily'])
             ->orderBy('priority_rank');
 
-        if ($this->statusFilter) {
-            $query->where('status', $this->statusFilter);
-        }
+        $this->applyTrainingNeedFilters($query);
 
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->whereHas('employee', function ($employeeQuery) {
-                    $employeeQuery->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('nip', 'like', '%' . $this->search . '%');
-                })->orWhere('training_type', 'like', '%' . $this->search . '%');
+        $trainingNeeds = $query->get();
+        $jobFamilies = $this->jobFamilyOptions();
+        $groups = $this->buildGroups($trainingNeeds, $jobFamilies);
+        $summary = $this->buildSummary();
+        $trainingTypes = TrainingNeed::query()
+            ->select('training_type')
+            ->distinct()
+            ->orderBy('training_type')
+            ->pluck('training_type')
+            ->values();
+        $periods = $this->periodOptions();
+
+        return view('livewire.training-needs-list', [
+            'trainingNeeds' => $trainingNeeds,
+            'groups' => $groups,
+            'jobFamilies' => $jobFamilies,
+            'summary' => $summary,
+            'trainingTypes' => $trainingTypes,
+            'periods' => $periods,
+        ]);
+    }
+
+    private function applyTrainingNeedFilters($query): void
+    {
+        if ($this->jobFamilyFilter !== '') {
+            $query->whereHas('employee.position.jobFamily', function ($jobFamilyQuery) {
+                $jobFamilyQuery->where('code', $this->jobFamilyFilter);
             });
         }
 
-        $trainingNeeds = $query->get();
-        $groups = collect([
-            'HK' => ['label' => 'Hakim', 'items' => $trainingNeeds->filter(fn ($need) => $need->employee->position->jobFamily?->code === 'HK')->values()],
-            'KP' => ['label' => 'Kepaniteraan', 'items' => $trainingNeeds->filter(fn ($need) => $need->employee->position->jobFamily?->code === 'KP')->values()],
-            'KS' => ['label' => 'Kesekretariatan', 'items' => $trainingNeeds->filter(fn ($need) => $need->employee->position->jobFamily?->code === 'KS')->values()],
+        if ($this->trainingTypeFilter !== '') {
+            $query->where('training_type', $this->trainingTypeFilter);
+        }
+
+        if ($this->periodFilter !== '') {
+            $query->where(function ($periodQuery) {
+                $periodQuery->whereYear('recommended_date', $this->periodFilter)
+                    ->orWhere(function ($fallbackQuery) {
+                        $fallbackQuery->whereNull('recommended_date')
+                            ->whereYear('created_at', $this->periodFilter);
+                    });
+            });
+        }
+    }
+
+    private function buildSummary(): array
+    {
+        $employeeQuery = Employee::query();
+
+        if ($this->jobFamilyFilter !== '') {
+            $employeeQuery->whereHas('position.jobFamily', function ($jobFamilyQuery) {
+                $jobFamilyQuery->where('code', $this->jobFamilyFilter);
+            });
+        }
+
+        $totalEmployees = (clone $employeeQuery)->count();
+        $trainedEmployees = (clone $employeeQuery)
+            ->whereHas('trainingHistories', function ($historyQuery) {
+                if ($this->trainingTypeFilter !== '') {
+                    $historyQuery->where('training_name', $this->trainingTypeFilter);
+                }
+
+                if ($this->periodFilter !== '') {
+                    $historyQuery->where(function ($dateQuery) {
+                        $dateQuery->whereYear('start_date', $this->periodFilter)
+                            ->orWhereYear('end_date', $this->periodFilter);
+                    });
+                }
+            })
+            ->count();
+
+        return [
+            'total_employees' => $totalEmployees,
+            'trained_employees' => $trainedEmployees,
+            'untrained_employees' => max($totalEmployees - $trainedEmployees, 0),
+            'quota' => $this->quota,
+        ];
+    }
+
+    private function buildGroups($trainingNeeds, array $jobFamilies)
+    {
+        $labels = collect($jobFamilies);
+
+        if ($this->jobFamilyFilter !== '') {
+            return collect([
+                $this->jobFamilyFilter => [
+                    'label' => $labels->get($this->jobFamilyFilter, 'Rumpun Terpilih'),
+                    'items' => $trainingNeeds->values(),
+                ],
+            ]);
+        }
+
+        $groups = $labels->map(fn ($label, $code) => [
+            'label' => $label,
+            'items' => $trainingNeeds
+                ->filter(fn ($need) => $need->employee->position->jobFamily?->code === $code)
+                ->values(),
         ]);
 
-        $knownCodes = ['HK', 'KP', 'KS'];
+        $knownCodes = $labels->keys()->all();
         $otherItems = $trainingNeeds
             ->filter(fn ($need) => ! in_array($need->employee->position->jobFamily?->code, $knownCodes, true))
             ->values();
@@ -103,9 +183,23 @@ class TrainingNeedsList extends Component
             $groups->put('OTHER', ['label' => 'Lainnya', 'items' => $otherItems]);
         }
 
-        return view('livewire.training-needs-list', [
-            'trainingNeeds' => $trainingNeeds,
-            'groups' => $groups,
-        ]);
+        return $groups;
+    }
+
+    private function jobFamilyOptions(): array
+    {
+        return [
+            'HK' => 'Hakim',
+            'KP' => 'Kepaniteraan',
+            'KS' => 'Kesekretariatan',
+        ];
+    }
+
+    private function periodOptions()
+    {
+        $currentYear = now()->year;
+
+        return collect(range($currentYear, $currentYear - 4))
+            ->map(fn ($year) => (string) $year);
     }
 }

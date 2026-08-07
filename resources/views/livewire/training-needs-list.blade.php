@@ -1,813 +1,344 @@
-<div class="training-needs-container">
-    <!-- Filters Section -->
-    <div class="row mb-4">
-        <div class="col-lg-4 col-md-6 mb-3">
-            <div class="search-box">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" 
-                       wire:model.live="search" 
-                       class="form-control search-input" 
-                       placeholder="Cari pegawai atau jenis pelatihan...">
-            </div>
+<div class="tna-simple">
+    @php
+        $statusLabels = [
+            'pending' => 'Pending',
+            'approved' => 'Disetujui',
+            'rejected' => 'Ditolak',
+            'completed' => 'Selesai',
+        ];
+
+        $statusClasses = [
+            'pending' => 'status-pending',
+            'approved' => 'status-approved',
+            'rejected' => 'status-rejected',
+            'completed' => 'status-completed',
+        ];
+    @endphp
+
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    <section class="simple-filter">
+        <h6>Filter Data</h6>
+        <div class="filter-grid">
+            <label>
+                <span>Rumpun Jabatan</span>
+                <select wire:model.live="jobFamilyFilter" class="form-select">
+                    <option value="">Semua Rumpun</option>
+                    @foreach($jobFamilies as $code => $label)
+                        <option value="{{ $code }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label>
+                <span>Jenis Pelatihan</span>
+                <select wire:model.live="trainingTypeFilter" class="form-select">
+                    <option value="">Semua</option>
+                    @foreach($trainingTypes as $trainingType)
+                        <option value="{{ $trainingType }}">{{ $trainingType }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label>
+                <span>Periode</span>
+                <select wire:model.live="periodFilter" class="form-select">
+                    <option value="">Semua Tahun</option>
+                    @foreach($periods as $period)
+                        <option value="{{ $period }}">{{ $period }}</option>
+                    @endforeach
+                </select>
+            </label>
         </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <select wire:model.live="statusFilter" class="form-select modern-select">
-                <option value="">Semua Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Disetujui</option>
-                <option value="rejected">Ditolak</option>
-                <option value="completed">Selesai</option>
-            </select>
-        </div>
-        <div class="col-lg-2 col-md-6 mb-3">
-            <button type="button" wire:click="$refresh" class="btn btn-outline-primary w-100 refresh-btn">
-                <i class="fas fa-sync-alt me-2"></i>
-                Refresh
+        <div class="filter-actions">
+            <button type="button" class="btn btn-outline-primary" wire:click="showFilteredData">
+                <i class="fas fa-eye me-2"></i>
+                Tampilkan
             </button>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-success flex-fill export-btn" onclick="exportTrainingNeedsCsv()">
-                    <i class="fas fa-download me-2"></i>
-                    Export
+            @if(\App\Support\Access::allows('analysis.run'))
+                <button type="button" class="btn btn-primary" wire:click="runAnalysis" wire:loading.attr="disabled" wire:target="runAnalysis">
+                    <span wire:loading.remove wire:target="runAnalysis">
+                        <i class="fas fa-calculator me-2"></i>
+                        Proses Analisis
+                    </span>
+                    <span wire:loading wire:target="runAnalysis">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Memproses...
+                    </span>
                 </button>
-                <button type="button" class="btn btn-info flex-fill print-btn" onclick="printTrainingNeeds()">
-                    <i class="fas fa-print me-2"></i>
-                    Print
-                </button>
-            </div>
+            @endif
         </div>
+    </section>
+
+    <section class="simple-summary">
+        <div><span>Jumlah Pegawai</span><strong>{{ $summary['total_employees'] }}</strong></div>
+        <div><span>Sudah Mengikuti Pelatihan</span><strong>{{ $summary['trained_employees'] }}</strong></div>
+        <div><span>Belum Mengikuti Pelatihan</span><strong>{{ $summary['untrained_employees'] }}</strong></div>
+        <div><span>Kuota Pelatihan</span><strong>{{ $summary['quota'] }} Orang</strong></div>
+    </section>
+
+    <div wire:loading.delay class="text-center text-muted py-4">
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        Memuat data...
     </div>
 
-    <!-- Loading Indicator -->
-    <div wire:loading class="loading-container">
-        <div class="loading-spinner">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-3 text-muted">Memuat data...</p>
-        </div>
-    </div>
-
-    <!-- Training Needs Grouped Tables -->
     <div wire:loading.remove>
         @if($trainingNeeds->count() > 0)
-            @foreach($groups as $group)
-                <section class="analysis-group mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                        <div>
-                            <h5 class="mb-0">{{ $group['label'] }}</h5>
-                            <small class="text-muted">{{ $group['items']->count() }} rekomendasi pelatihan</small>
-                        </div>
+            @foreach($groups as $groupKey => $group)
+                <section class="simple-group" wire:key="training-group-{{ $groupKey }}-{{ $jobFamilyFilter }}-{{ $trainingTypeFilter }}-{{ $periodFilter }}">
+                    <div class="group-title">
+                        <h5>{{ $group['label'] }}</h5>
+                        <span>{{ $group['items']->count() }} rekomendasi pelatihan</span>
                     </div>
 
                     @if($group['items']->isNotEmpty())
-                        <div class="table-responsive modern-table">
-                            <table class="table table-hover js-data-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
-                                <thead class="table-header">
+                        <div class="table-responsive simple-table-shell">
+                            <table class="table align-middle js-data-table simple-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
+                                <thead>
                                     <tr>
-                                        <th class="priority-col">Prioritas</th>
-                                        <th class="employee-col">Pegawai</th>
-                                        <th class="position-col">Jabatan</th>
-                                        <th class="training-col">Jenis Pelatihan</th>
-                                        <th class="score-col">Skor SAW</th>
-                                        <th class="status-col">Status</th>
-                                        <th class="date-col">Tanggal</th>
-                                        <th class="action-col">Aksi</th>
+                                        <th>No</th>
+                                        <th>Pegawai</th>
+                                        <th>Jabatan</th>
+                                        <th>Nilai SAW</th>
+                                        <th>Prioritas</th>
+                                        <th>Rekomendasi Pelatihan</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($group['items'] as $need)
-                                    <tr class="table-row {{ $need->priority_rank <= 5 ? 'priority-row' : '' }}">
-                                        <td class="priority-cell">
-                                            @if($need->priority_rank <= 3)
-                                                <span class="badge bg-danger priority-badge-lg">#{{ $need->priority_rank }}</span>
-                                            @elseif($need->priority_rank <= 10)
-                                                <span class="badge bg-warning priority-badge-lg">#{{ $need->priority_rank }}</span>
-                                            @else
-                                                <span class="badge bg-secondary priority-badge-lg">#{{ $need->priority_rank }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="employee-cell">
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-circle me-3">
-                                                    <i class="fas fa-user"></i>
+                                    @foreach($group['items'] as $index => $need)
+                                        @php
+                                            $priorityLabel = match (true) {
+                                                (float) $need->saw_score >= 0.85 => 'Sangat Tinggi',
+                                                (float) $need->saw_score >= 0.70 => 'Tinggi',
+                                                (float) $need->saw_score >= 0.55 => 'Sedang',
+                                                default => 'Rendah',
+                                            };
+                                        @endphp
+                                        <tr>
+                                            <td>{{ $index + 1 }}</td>
+                                            <td>
+                                                <strong>{{ $need->employee->name }}</strong>
+                                                <small>{{ $need->employee->nip }}</small>
+                                            </td>
+                                            <td>{{ $need->employee->position->name }}</td>
+                                            <td><strong>{{ number_format((float) $need->saw_score, 4) }}</strong></td>
+                                            <td>{{ $priorityLabel }}</td>
+                                            <td>{{ $need->training_type }}</td>
+                                            <td>
+                                                <span class="simple-status {{ $statusClasses[$need->status] ?? 'status-pending' }}">
+                                                    {{ $statusLabels[$need->status] ?? ucfirst($need->status) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="simple-actions">
+                                                    <a href="{{ route('training-needs.show', $need) }}" class="btn btn-sm btn-outline-info" title="Detail">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    @if($need->status === 'pending' && \App\Support\Access::allows('training-needs.approve'))
+                                                        <button type="button" class="btn btn-sm btn-outline-success" wire:click="updateStatus({{ $need->id }}, 'approved')" title="Setujui">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" wire:click="updateStatus({{ $need->id }}, 'rejected')" title="Tolak">
+                                                            <i class="fas fa-xmark"></i>
+                                                        </button>
+                                                    @endif
+                                                    @if($need->status === 'approved' && \App\Support\Access::allows('training-needs.manage'))
+                                                        <button type="button" class="btn btn-sm btn-outline-primary" wire:click="updateStatus({{ $need->id }}, 'completed')" title="Selesai">
+                                                            <i class="fas fa-flag-checkered"></i>
+                                                        </button>
+                                                    @endif
+                                                    @if(\App\Support\Access::allows('training-needs.manage'))
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" wire:click="deleteTrainingNeed({{ $need->id }})" wire:confirm="Yakin ingin menghapus data ini?" title="Hapus">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    @endif
                                                 </div>
-                                                <div>
-                                                    <div class="employee-name">{{ $need->employee->name }}</div>
-                                                    <small class="text-muted">{{ $need->employee->nip }}</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="position-cell">
-                                            <span class="badge position-badge">{{ $need->employee->position->name }}</span>
-                                        </td>
-                                        <td class="training-cell">
-                                            <div class="training-type">{{ $need->training_type }}</div>
-                                            <small class="text-muted">{{ Str::limit($need->training_description, 50) }}</small>
-                                        </td>
-                                        <td class="score-cell">
-                                            <div class="score-container">
-                                                <div class="progress score-progress mb-1">
-                                                    <div class="progress-bar" style="width: {{ ($need->saw_score * 100) }}%"></div>
-                                                </div>
-                                                <small class="score-value">{{ number_format($need->saw_score, 4) }}</small>
-                                            </div>
-                                        </td>
-                                        <td class="status-cell">
-                                            @if($need->status === 'pending')
-                                                <span class="badge status-pending">Pending</span>
-                                            @elseif($need->status === 'approved')
-                                                <span class="badge status-approved">Disetujui</span>
-                                            @elseif($need->status === 'completed')
-                                                <span class="badge status-completed">Selesai</span>
-                                            @else
-                                                <span class="badge status-rejected">Ditolak</span>
-                                            @endif
-                                        </td>
-                                        <td class="date-cell">
-                                            @if($need->recommended_date)
-                                                <span class="date-text">{{ $need->recommended_date->format('d/m/Y') }}</span>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td class="action-cell">
-                                            <div class="btn-group action-buttons" role="group">
-                                                <a href="{{ route('training-needs.show', $need) }}"
-                                                   class="btn btn-outline-info btn-sm action-btn"
-                                                   title="Detail">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                @if($need->status === 'pending' && (\App\Support\Access::allows('training-needs.manage') || \App\Support\Access::allows('training-needs.approve')))
-                                                <button type="button"
-                                                        class="btn btn-outline-success btn-sm action-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#updateStatusModal{{ $need->id }}"
-                                                        title="Update Status">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                @endif
-                                                @if(\App\Support\Access::allows('training-needs.manage'))
-                                                <button wire:click="deleteTrainingNeed({{ $need->id }})"
-                                                        wire:confirm="Yakin ingin menghapus data ini?"
-                                                        class="btn btn-outline-danger btn-sm action-btn"
-                                                        title="Hapus">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                        </tr>
                                     @endforeach
                                 </tbody>
                             </table>
                         </div>
                     @else
-                        <div class="empty-category">Belum ada rekomendasi untuk kategori {{ $group['label'] }}.</div>
+                        <div class="simple-empty">Belum ada rekomendasi untuk filter ini.</div>
                     @endif
                 </section>
             @endforeach
-        
         @else
-        <div class="empty-state">
-            <div class="empty-icon">
-                <i class="fas fa-graduation-cap"></i>
+            <div class="simple-empty">
+                Belum ada hasil analisis sesuai filter. Jalankan proses analisis SAW atau ubah filter data.
             </div>
-            <h5 class="empty-title">
-                @if($search || $statusFilter)
-                    Tidak ada data yang sesuai dengan filter
-                @else
-                    Belum ada analisis kebutuhan pelatihan
-                @endif
-            </h5>
-            <p class="empty-description">
-                @if($search || $statusFilter)
-                    Coba ubah filter pencarian atau status
-                @else
-                    Klik tombol "Jalankan Analisis SAW" untuk memulai analisis kebutuhan pelatihan.
-                @endif
-            </p>
-            @if(!$search && !$statusFilter && \App\Support\Access::allows('analysis.run'))
-            <button type="button" class="btn btn-primary empty-action" wire:click="runAnalysis" wire:loading.attr="disabled">
-                <span wire:loading.remove wire:target="runAnalysis">
-                    <i class="fas fa-calculator me-2"></i>
-                    Jalankan Analisis SAW
-                </span>
-                <span wire:loading wire:target="runAnalysis">
-                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                    Menganalisis...
-                </span>
-            </button>
-            @endif
-        </div>
         @endif
     </div>
 
-    <!-- Summary Cards -->
-    @if($trainingNeeds->count() > 0)
-    <div class="summary-section mt-5">
-        <div class="row g-3">
-            <div class="col-lg-3 col-md-6">
-                <div class="summary-card priority-card">
-                    <div class="summary-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div class="summary-content">
-                        <h4 class="summary-number">{{ $trainingNeeds->where('priority_rank', '<=', 5)->count() }}</h4>
-                        <p class="summary-label">Prioritas Tinggi</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="summary-card pending-card">
-                    <div class="summary-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="summary-content">
-                        <h4 class="summary-number">{{ $trainingNeeds->where('status', 'pending')->count() }}</h4>
-                        <p class="summary-label">Menunggu Persetujuan</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="summary-card approved-card">
-                    <div class="summary-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="summary-content">
-                        <h4 class="summary-number">{{ $trainingNeeds->where('status', 'approved')->count() }}</h4>
-                        <p class="summary-label">Disetujui</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="summary-card score-card">
-                    <div class="summary-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="summary-content">
-                        <h4 class="summary-number">{{ number_format($trainingNeeds->avg('saw_score'), 3) }}</h4>
-                        <p class="summary-label">Rata-rata Skor SAW</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    <!-- Modals for Status Update -->
-    @foreach($trainingNeeds as $need)
-    <div class="modal fade" id="updateStatusModal{{ $need->id }}" tabindex="-1" wire:ignore.self>
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content modern-modal">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-edit me-2"></i>
-                        Update Status Pelatihan
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="employee-info-modal mb-3">
-                        <strong>{{ $need->employee->name }}</strong>
-                        <br>
-                        <small class="text-muted">{{ $need->training_type }}</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" id="status{{ $need->id }}">
-                            <option value="pending" {{ $need->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                            @if(\App\Support\Access::allows('training-needs.approve'))
-                            <option value="approved" {{ $need->status === 'approved' ? 'selected' : '' }}>Disetujui</option>
-                            @endif
-                            <option value="rejected" {{ $need->status === 'rejected' ? 'selected' : '' }}>Ditolak</option>
-                            <option value="completed" {{ $need->status === 'completed' ? 'selected' : '' }}>Selesai</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Catatan</label>
-                        <textarea class="form-control" id="notes{{ $need->id }}" rows="3" placeholder="Tambahkan catatan...">{{ $need->notes }}</textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" 
-                            class="btn btn-primary"
-                            onclick="updateStatus{{ $need->id }}()">
-                        <i class="fas fa-save me-2"></i>
-                        Simpan
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endforeach
-
-    <!-- Styles and Scripts inside the component -->
     <style>
-        /* Modern Training Needs Styles */
-        .training-needs-container {
-            padding: 0;
+        .tna-simple {
+            display: grid;
+            gap: 1.5rem;
         }
 
-        /* Search Box */
-        .search-box {
-            position: relative;
+        .simple-filter {
+            padding-bottom: 1.25rem;
+            border-bottom: 1px dashed var(--line);
         }
 
-        .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--ma-green);
-            z-index: 10;
+        .simple-filter h6 {
+            margin: 0 0 1rem;
+            font-weight: 800;
+            color: var(--text-main);
         }
 
-        .search-input {
-            padding-left: 45px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            transition: all 0.3s ease;
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
         }
 
-        .search-input:focus {
-            border-color: var(--ma-green);
-            box-shadow: 0 0 0 0.2rem rgba(34, 139, 34, 0.25);
+        .filter-grid label {
+            display: grid;
+            gap: 0.4rem;
         }
 
-        /* Modern Select */
-        .modern-select {
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .modern-select:focus {
-            border-color: var(--ma-green);
-            box-shadow: 0 0 0 0.2rem rgba(34, 139, 34, 0.25);
-        }
-
-        /* Buttons */
-        .refresh-btn, .export-btn, .print-btn {
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .refresh-btn:hover, .export-btn:hover, .print-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        /* Loading */
-        .loading-container {
-            text-align: center;
-            padding: 60px 20px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 20px;
-            margin: 20px 0;
-        }
-
-        .loading-spinner .spinner-border {
-            width: 3rem;
-            height: 3rem;
-        }
-
-        /* Training Cards (Mobile) */
-        .training-card {
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-
-        .training-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-        }
-
-        .training-card.priority-high {
-            border-left: 5px solid #dc3545;
-        }
-
-        .avatar-circle {
-            width: 45px;
-            height: 45px;
-            background: linear-gradient(135deg, var(--ma-green), var(--ma-dark-green));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-        }
-
-        .employee-name {
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .training-type {
-            font-weight: 600;
-            color: var(--ma-dark-green);
-            margin-bottom: 8px;
-        }
-
-        .training-desc {
-            line-height: 1.4;
-        }
-
-        /* Priority Badges */
-        .priority-rank, .priority-badge-lg {
+        .filter-grid span,
+        .simple-summary span,
+        .group-title span {
+            color: var(--text-muted);
             font-size: 0.9rem;
-            font-weight: 700;
-            padding: 8px 12px;
-            border-radius: 20px;
         }
 
-        /* Status Badges */
+        .filter-actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .simple-summary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.85rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px dashed var(--line);
+        }
+
+        .simple-summary div {
+            display: grid;
+            gap: 0.25rem;
+            padding: 0.8rem 0.9rem;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fbfcfd;
+        }
+
+        .simple-summary strong {
+            color: var(--text-main);
+            font-size: 1.25rem;
+        }
+
+        .simple-group {
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .group-title h5 {
+            margin: 0;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .simple-table-shell {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .simple-table {
+            margin: 0;
+        }
+
+        .simple-table th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .simple-table td {
+            border-bottom: 1px solid #eef2f6;
+        }
+
+        .simple-table td small {
+            display: block;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        .simple-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 0.58rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
         .status-pending {
-            background: linear-gradient(135deg, #ffc107, #ffb300);
-            color: #333;
+            background: #fff3cd;
+            color: #7a4d00;
         }
 
         .status-approved {
-            background: linear-gradient(135deg, var(--ma-green), var(--ma-dark-green));
-            color: white;
-        }
-
-        .status-completed {
-            background: linear-gradient(135deg, #17a2b8, #138496);
-            color: white;
+            background: var(--ma-light-green);
+            color: var(--ma-dark-green);
         }
 
         .status-rejected {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            color: white;
+            background: #fde2e2;
+            color: #991b1b;
         }
 
-        .position-badge {
-            background: linear-gradient(135deg, var(--ma-yellow), var(--ma-dark-yellow));
-            color: #333;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 15px;
+        .status-completed {
+            background: #e0f2fe;
+            color: #075985;
         }
 
-        /* Score Progress */
-        .score-progress {
-            height: 8px;
-            border-radius: 10px;
-            background-color: #e9ecef;
+        .simple-actions {
+            display: inline-flex;
+            gap: 0.25rem;
         }
 
-        .score-progress .progress-bar {
-            background: linear-gradient(90deg, var(--ma-green), var(--ma-yellow));
-            border-radius: 10px;
-        }
-
-        .score-value {
-            color: var(--ma-dark-green);
-            font-weight: 700;
-        }
-
-        /* Modern Table */
-        .modern-table {
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-
-        .table-header th {
-            background: linear-gradient(135deg, var(--ma-green), var(--ma-dark-green));
-            color: white;
-            font-weight: 600;
-            border: none;
-            padding: 20px 15px;
-            text-align: center;
-        }
-
-        .table-row {
-            transition: all 0.3s ease;
-        }
-
-        .table-row:hover {
-            background-color: rgba(34, 139, 34, 0.05);
-            transform: scale(1.01);
-        }
-
-        .table-row.priority-row {
-            background-color: rgba(255, 193, 7, 0.1);
-        }
-
-        .table td {
-            padding: 20px 15px;
-            vertical-align: middle;
-            border: none;
-            border-bottom: 1px solid #f1f3f4;
-        }
-
-        /* Action Buttons */
-        .action-buttons .action-btn {
+        .simple-empty {
+            border: 1px dashed var(--line);
             border-radius: 8px;
-            margin: 0 2px;
-            transition: all 0.3s ease;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Empty State */
-        .empty-state {
+            padding: 1.5rem;
+            color: var(--text-muted);
             text-align: center;
-            padding: 80px 20px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 20px;
-            margin: 20px 0;
+            background: #fbfcfd;
         }
 
-        .empty-icon {
-            font-size: 4rem;
-            color: var(--ma-green);
-            margin-bottom: 20px;
-        }
-
-        .empty-title {
-            color: #2c3e50;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
-        .empty-description {
-            color: #6c757d;
-            margin-bottom: 30px;
-            max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .empty-action {
-            border-radius: 25px;
-            padding: 12px 30px;
-            font-weight: 600;
-        }
-
-        /* Summary Cards */
-        .summary-section {
-            margin-top: 40px;
-        }
-
-        .summary-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .summary-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-        }
-
-        .summary-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-        }
-
-        .priority-card .summary-icon {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-        }
-
-        .pending-card .summary-icon {
-            background: linear-gradient(135deg, #ffc107, #ffb300);
-        }
-
-        .approved-card .summary-icon {
-            background: linear-gradient(135deg, var(--ma-green), var(--ma-dark-green));
-        }
-
-        .score-card .summary-icon {
-            background: linear-gradient(135deg, #17a2b8, #138496);
-        }
-
-        .summary-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 0;
-        }
-
-        .summary-label {
-            color: #6c757d;
-            margin: 0;
-            font-weight: 500;
-        }
-
-        /* Modern Modal */
-        .modern-modal {
-            border-radius: 20px;
-            border: none;
-            overflow: hidden;
-        }
-
-        .modern-modal .modal-header {
-            background: linear-gradient(135deg, var(--ma-green), var(--ma-dark-green));
-            color: white;
-            border: none;
-            padding: 25px;
-        }
-
-        .modern-modal .modal-body {
-            padding: 30px;
-        }
-
-        .modern-modal .modal-footer {
-            border: none;
-            padding: 20px 30px;
-            background-color: #f8f9fa;
-        }
-
-        .employee-info-modal {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            padding: 15px;
-            border-radius: 12px;
-        }
-
-        /* Pagination */
-        .pagination-container {
-            display: flex;
-            justify-content: center;
-        }
-
-        .pagination-container .pagination {
-            gap: 5px;
-        }
-
-        .pagination-container .page-link {
-            border-radius: 10px;
-            border: 2px solid #e9ecef;
-            color: var(--ma-green);
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .pagination-container .page-link:hover {
-            background-color: var(--ma-green);
-            border-color: var(--ma-green);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .pagination-container .page-item.active .page-link {
-            background-color: var(--ma-green);
-            border-color: var(--ma-green);
-        }
-
-        /* Responsive Adjustments */
-        @media (max-width: 768px) {
-            .training-card {
-                margin-bottom: 20px;
-            }
-            
-            .summary-card {
-                padding: 20px;
-                gap: 15px;
-            }
-            
-            .summary-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
-            }
-            
-            .summary-number {
-                font-size: 1.5rem;
-            }
-            
-            .search-input {
-                margin-bottom: 15px;
+        @media (max-width: 991.98px) {
+            .filter-grid,
+            .simple-summary {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
-        @media (max-width: 576px) {
-            .training-needs-container {
-                padding: 0 10px;
+        @media (max-width: 575.98px) {
+            .filter-grid,
+            .simple-summary {
+                grid-template-columns: 1fr;
             }
-            
-            .summary-card {
+
+            .filter-actions {
                 flex-direction: column;
-                text-align: center;
-                gap: 10px;
             }
-            
-            .card-actions .btn-group {
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .card-actions .btn {
+
+            .filter-actions .btn {
                 width: 100%;
             }
         }
-
-        .training-needs-container .training-card,
-        .training-needs-container .modern-table,
-        .training-needs-container .summary-card,
-        .training-needs-container .loading-container,
-        .training-needs-container .empty-state,
-        .training-needs-container .modern-modal,
-        .training-needs-container .employee-info-modal {
-            border-radius: 8px;
-        }
-
-        .training-needs-container .training-card:hover,
-        .training-needs-container .summary-card:hover,
-        .training-needs-container .table-row:hover {
-            transform: none;
-        }
-
-        .training-needs-container .table-header th {
-            background: #f8fafc !important;
-            color: var(--text-muted) !important;
-            border-bottom: 1px solid var(--line) !important;
-        }
-
-        .training-needs-container .avatar-circle,
-        .training-needs-container .summary-icon {
-            background: var(--ma-light-green) !important;
-            color: var(--ma-dark-green) !important;
-        }
-
-        .training-needs-container .position-badge {
-            background: var(--ma-light-yellow) !important;
-            color: #5f4614 !important;
-        }
-
-        .training-needs-container .modern-table,
-        .training-needs-container .summary-card,
-        .training-needs-container .training-card {
-            border: 1px solid var(--line);
-        }
     </style>
-
-    <script>
-        @foreach($trainingNeeds as $need)
-        function updateStatus{{ $need->id }}() {
-            const status = document.getElementById('status{{ $need->id }}').value;
-            const notes = document.getElementById('notes{{ $need->id }}').value;
-            
-            @this.call('updateStatus', {{ $need->id }}, status, notes);
-            
-            // Close modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('updateStatusModal{{ $need->id }}'));
-            modal.hide();
-        }
-        @endforeach
-
-        function exportTrainingNeedsCsv() {
-            const rows = [['Prioritas', 'NIP', 'Nama Pegawai', 'Jabatan', 'Jenis Pelatihan', 'Skor SAW', 'Status', 'Tanggal Rekomendasi']];
-
-            @foreach($trainingNeeds as $need)
-                rows.push([
-                    '{{ $need->priority_rank }}',
-                    @json($need->employee->nip),
-                    @json($need->employee->name),
-                    @json($need->employee->position->name),
-                    @json($need->training_type),
-                    '{{ number_format((float) $need->saw_score, 4) }}',
-                    @json($need->status),
-                    @json($need->recommended_date ? $need->recommended_date->format('d/m/Y') : '-')
-                ]);
-            @endforeach
-
-            const csv = rows.map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'prioritas-pelatihan-{{ now()->format('Y-m-d') }}.csv';
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
-        }
-
-        function printTrainingNeeds() {
-            window.print();
-        }
-    </script>
 </div>
