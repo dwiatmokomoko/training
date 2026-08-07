@@ -43,9 +43,9 @@
             <label>
                 <span>Periode</span>
                 <select wire:model.live="periodFilter" class="form-select">
-                    <option value="">Semua Tahun</option>
+                    <option value="">Semua Periode</option>
                     @foreach($periods as $period)
-                        <option value="{{ $period }}">{{ $period }}</option>
+                        <option value="{{ $period['key'] }}">{{ $period['label'] }}</option>
                     @endforeach
                 </select>
             </label>
@@ -93,7 +93,7 @@
 
                     @if($group['items']->isNotEmpty())
                         <div class="table-responsive simple-table-shell">
-                            <table class="table align-middle js-data-table simple-table" data-page-length="10" data-order="[[0,&quot;asc&quot;]]">
+                            <table class="table align-middle simple-table">
                                 <thead>
                                     <tr>
                                         <th>No</th>
@@ -102,7 +102,8 @@
                                         <th>Nilai SAW</th>
                                         <th>Prioritas</th>
                                         <th>Rekomendasi Pelatihan</th>
-                                        <th>Status</th>
+                                        <th>Status Kelayakan</th>
+                                        <th>Tindak Lanjut</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
@@ -126,6 +127,11 @@
                                             <td><strong>{{ number_format((float) $need->saw_score, 4) }}</strong></td>
                                             <td>{{ $priorityLabel }}</td>
                                             <td>{{ $need->training_type }}</td>
+                                            <td>
+                                                <span class="simple-status {{ $need->eligibility_label === 'Layak' ? 'status-eligible' : 'status-reserve' }}">
+                                                    {{ $need->eligibility_label }}
+                                                </span>
+                                            </td>
                                             <td>
                                                 <span class="simple-status {{ $statusClasses[$need->status] ?? 'status-pending' }}">
                                                     {{ $statusLabels[$need->status] ?? ucfirst($need->status) }}
@@ -293,6 +299,16 @@
         .status-approved {
             background: var(--ma-light-green);
             color: var(--ma-dark-green);
+        }
+
+        .status-eligible {
+            background: var(--ma-light-green);
+            color: var(--ma-dark-green);
+        }
+
+        .status-reserve {
+            background: var(--ma-light-yellow);
+            color: #6f4e00;
         }
 
         .status-rejected {

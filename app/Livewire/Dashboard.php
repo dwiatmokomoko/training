@@ -99,7 +99,7 @@ class Dashboard extends Component
         try {
             $sawService = new SAWService();
             $results = $sawService->calculateTrainingNeeds();
-            $sawService->saveTrainingNeeds($results);
+            $sawService->saveTrainingNeeds($results, (int) now()->year, now()->month <= 6 ? 1 : 2);
             
             $this->loadData(); // Refresh data
             

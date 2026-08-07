@@ -383,24 +383,35 @@ class SAWService
     /**
      * Simpan hasil analisis ke database
      */
-    public function saveTrainingNeeds(Collection $results): void
+    public function saveTrainingNeeds(Collection $results, ?int $periodYear = null, ?int $periodSemester = null): void
     {
-        // Hapus data lama
-        TrainingNeed::truncate();
+        $periodYear ??= (int) now()->year;
+        $periodSemester ??= now()->month <= 6 ? 1 : 2;
+        $periodLabel = $periodYear . ' Semester ' . $periodSemester;
+
+        TrainingNeed::where('period_year', $periodYear)
+            ->where('period_semester', $periodSemester)
+            ->delete();
 
         foreach ($results as $index => $result) {
             $employee = $result['employee'];
             $recommendation = $result['training_recommendation'];
 
             foreach ($recommendation['training_types'] as $trainingType) {
+                $sawScore = (float) $result['saw_score'];
+
                 TrainingNeed::create([
                     'employee_id' => $employee->id,
                     'training_type' => $trainingType,
                     'training_description' => "Rekomendasi pelatihan untuk {$employee->name} berdasarkan analisis SAW",
-                    'saw_score' => $result['saw_score'],
+                    'saw_score' => $sawScore,
                     'priority_rank' => $index + 1,
+                    'eligibility_status' => $sawScore > 0.9 ? 'layak' : 'cadangan',
                     'status' => 'pending',
                     'recommended_date' => now()->addDays(30),
+                    'period_year' => $periodYear,
+                    'period_semester' => $periodSemester,
+                    'period_label' => $periodLabel,
                     'notes' => "Prioritas: {$recommendation['priority']}, Urgensi: {$recommendation['urgency_level']}"
                 ]);
             }

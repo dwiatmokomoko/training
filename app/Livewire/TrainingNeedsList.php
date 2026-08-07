@@ -19,7 +19,7 @@ class TrainingNeedsList extends Component
 
     public function mount(): void
     {
-        $this->periodFilter = (string) now()->year;
+        $this->periodFilter = $this->periodKey((int) now()->year, now()->month <= 6 ? 1 : 2);
     }
 
     public function showFilteredData(): void
@@ -63,9 +63,10 @@ class TrainingNeedsList extends Component
 
         $sawService = app(SAWService::class);
         $results = $sawService->calculateTrainingNeeds();
-        $sawService->saveTrainingNeeds($results);
+        [$periodYear, $periodSemester] = $this->selectedPeriodParts();
+        $sawService->saveTrainingNeeds($results, $periodYear, $periodSemester);
 
-        session()->flash('success', 'Analisis SAW berhasil dijalankan dan daftar prioritas diperbarui.');
+        session()->flash('success', "Analisis SAW {$periodYear} Semester {$periodSemester} berhasil dijalankan dan disimpan.");
     }
 
     public function render()
@@ -110,11 +111,20 @@ class TrainingNeedsList extends Component
         }
 
         if ($this->periodFilter !== '') {
-            $query->where(function ($periodQuery) {
-                $periodQuery->whereYear('recommended_date', $this->periodFilter)
-                    ->orWhere(function ($fallbackQuery) {
-                        $fallbackQuery->whereNull('recommended_date')
-                            ->whereYear('created_at', $this->periodFilter);
+            [$periodYear, $periodSemester] = $this->selectedPeriodParts();
+            $startMonth = $periodSemester === 1 ? 1 : 7;
+            $endMonth = $periodSemester === 1 ? 6 : 12;
+
+            $query->where(function ($periodQuery) use ($periodYear, $periodSemester, $startMonth, $endMonth) {
+                $periodQuery->where(function ($storedPeriodQuery) use ($periodYear, $periodSemester) {
+                    $storedPeriodQuery->where('period_year', $periodYear)
+                        ->where('period_semester', $periodSemester);
+                })
+                    ->orWhere(function ($fallbackQuery) use ($periodYear, $startMonth, $endMonth) {
+                        $fallbackQuery->whereNull('period_year')
+                            ->whereYear('recommended_date', $periodYear)
+                            ->whereMonth('recommended_date', '>=', $startMonth)
+                            ->whereMonth('recommended_date', '<=', $endMonth);
                     });
             });
         }
@@ -138,9 +148,20 @@ class TrainingNeedsList extends Component
                 }
 
                 if ($this->periodFilter !== '') {
-                    $historyQuery->where(function ($dateQuery) {
-                        $dateQuery->whereYear('start_date', $this->periodFilter)
-                            ->orWhereYear('end_date', $this->periodFilter);
+                    [$periodYear, $periodSemester] = $this->selectedPeriodParts();
+                    $startMonth = $periodSemester === 1 ? 1 : 7;
+                    $endMonth = $periodSemester === 1 ? 6 : 12;
+
+                    $historyQuery->where(function ($dateQuery) use ($periodYear, $startMonth, $endMonth) {
+                        $dateQuery->where(function ($startQuery) use ($periodYear, $startMonth, $endMonth) {
+                            $startQuery->whereYear('start_date', $periodYear)
+                                ->whereMonth('start_date', '>=', $startMonth)
+                                ->whereMonth('start_date', '<=', $endMonth);
+                        })->orWhere(function ($endQuery) use ($periodYear, $startMonth, $endMonth) {
+                            $endQuery->whereYear('end_date', $periodYear)
+                                ->whereMonth('end_date', '>=', $startMonth)
+                                ->whereMonth('end_date', '<=', $endMonth);
+                        });
                     });
                 }
             })
@@ -198,8 +219,33 @@ class TrainingNeedsList extends Component
     private function periodOptions()
     {
         $currentYear = now()->year;
+        $options = collect();
 
-        return collect(range($currentYear, $currentYear - 4))
-            ->map(fn ($year) => (string) $year);
+        foreach (range($currentYear, $currentYear - 4) as $year) {
+            $options->push([
+                'key' => $this->periodKey($year, 2),
+                'label' => $year . ' Semester 2',
+            ]);
+            $options->push([
+                'key' => $this->periodKey($year, 1),
+                'label' => $year . ' Semester 1',
+            ]);
+        }
+
+        return $options;
+    }
+
+    private function periodKey(int $year, int $semester): string
+    {
+        return $year . '-S' . $semester;
+    }
+
+    private function selectedPeriodParts(): array
+    {
+        if (! preg_match('/^(\\d{4})-S([12])$/', $this->periodFilter, $matches)) {
+            return [(int) now()->year, now()->month <= 6 ? 1 : 2];
+        }
+
+        return [(int) $matches[1], (int) $matches[2]];
     }
 }
