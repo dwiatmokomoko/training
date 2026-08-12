@@ -41,9 +41,9 @@
             'title' => 'Jalankan Analisis SAW',
             'short' => 'Hitung prioritas',
             'icon' => 'fa-calculator',
-            'plain' => 'Sistem mengolah semua data dengan metode Simple Additive Weighting untuk membuat ranking kebutuhan pelatihan.',
-            'prepare' => ['C1 dari penilaian kompetensi', 'C2 dari lama tidak mengikuti pelatihan', 'C3 dari masa jabatan', 'C4 dari riwayat promosi', 'C5 dari usia pegawai'],
-            'result' => 'Muncul daftar pegawai dan jenis pelatihan yang diprioritaskan.',
+            'plain' => 'Sistem mengolah data dengan metode Simple Additive Weighting berdasarkan rumpun jabatan, jenis pelatihan, dan periode semester yang dipilih.',
+            'prepare' => ['C1 dari penilaian kompetensi', 'C2 dari lama tidak mengikuti pelatihan', 'C3 dari masa jabatan', 'C4 dari riwayat promosi', 'C5 dari usia pegawai', 'Rumpun jabatan dan periode semester analisis'],
+            'result' => 'Muncul daftar pegawai, jenis pelatihan prioritas, status kelayakan, dan hasil tersimpan per periode.',
             'menu' => 'Kebutuhan Pelatihan',
             'route' => route('training-needs.index'),
         ],
@@ -81,7 +81,7 @@
         ['input' => 'Data pegawai, jabatan, unit kerja, tanggal lahir, TMT jabatan', 'process' => 'Validasi profil dan pemetaan rumpun jabatan', 'output' => 'Profil pegawai siap dianalisis'],
         ['input' => 'Riwayat pelatihan, riwayat promosi, masa jabatan', 'process' => 'Konversi otomatis menjadi nilai C2, C3, dan C4', 'output' => 'Skor kebutuhan pengembangan karier'],
         ['input' => 'Nilai SKP/IKU/KPI dan indikator kompetensi', 'process' => 'Konversi nilai kinerja berbasis kompetensi menjadi C1', 'output' => 'Skor capaian kinerja pegawai'],
-        ['input' => 'Kriteria SAW dan bobot preferensi', 'process' => 'Normalisasi benefit/cost dan perhitungan V', 'output' => 'Ranking prioritas dan rekomendasi pelatihan'],
+        ['input' => 'Kriteria SAW dan bobot preferensi', 'process' => 'Normalisasi benefit/cost dan perhitungan V', 'output' => 'Ranking prioritas, rekomendasi pelatihan, dan status kelayakan'],
     ];
 
     $systemFlow = [
@@ -89,10 +89,13 @@
         'Buka Data Pegawai',
         'Lengkapi riwayat jabatan dan pelatihan',
         'Input penilaian kinerja',
+        'Pilih rumpun, jenis pelatihan, dan periode',
         'Ambil kriteria dan bobot SAW',
         'Normalisasi nilai benefit/cost',
         'Hitung nilai V',
         'Urutkan ranking',
+        'Simpan hasil per periode semester',
+        'Tentukan Layak atau Cadangan',
         'Tampilkan rekomendasi dan laporan',
     ];
 
@@ -108,7 +111,7 @@
         ['menu' => 'Data Pegawai', 'plain' => 'Profil NIP/NIK, jabatan, unit kerja, riwayat jabatan, pendidikan, pelatihan, dan dokumen pendukung.', 'route' => route('employees.index'), 'icon' => 'fa-users'],
         ['menu' => 'Jabatan & Standar Kompetensi', 'plain' => 'Master jabatan, kompetensi inti/manajerial/teknis/sosial kultural, level 1-5, dan bobot.', 'route' => route('positions-competencies'), 'icon' => 'fa-sitemap'],
         ['menu' => 'Penilaian Kinerja', 'plain' => 'Input nilai SKP, IKU, KPI, indikator per rumpun, dan pembobotan kinerja terhadap TNA.', 'route' => route('performance'), 'icon' => 'fa-clipboard-check'],
-        ['menu' => 'Analisis TNA', 'plain' => 'Perbandingan kompetensi aktual vs standar, gap otomatis, klasifikasi wajib/prioritas/pengembangan, dan pemetaan individu/unit.', 'route' => route('training-needs.index'), 'icon' => 'fa-magnifying-glass-chart'],
+        ['menu' => 'Analisis TNA', 'plain' => 'Filter rumpun jabatan, jenis pelatihan, periode semester, proses SAW, pagination hasil, dan status kelayakan Layak/Cadangan.', 'route' => route('training-needs.index'), 'icon' => 'fa-magnifying-glass-chart'],
         ['menu' => 'Rekomendasi Pelatihan', 'plain' => 'Jenis pelatihan, metode klasikal/e-learning/coaching, target peserta, estimasi waktu, urgensi, dan mapping gap.', 'route' => route('training-recommendations'), 'icon' => 'fa-graduation-cap'],
         ['menu' => 'Perencanaan Pelatihan', 'plain' => 'Rencana tahunan, jadwal kegiatan, peserta, estimasi anggaran, dan approval workflow pimpinan.', 'route' => route('training-plans'), 'icon' => 'fa-calendar-check'],
         ['menu' => 'Laporan', 'plain' => 'Laporan TNA per pegawai, jabatan/unit, rekap gap, rencana vs realisasi, export PDF/Excel.', 'route' => route('training-needs.report'), 'icon' => 'fa-chart-bar'],
@@ -137,7 +140,9 @@
         'Semua pegawai sudah memiliki jabatan dan unit kerja.',
         'Tanggal lahir, TMT jabatan, promosi terakhir, dan pelatihan terakhir sudah diisi bila datanya ada.',
         'Penilaian kompetensi terbaru sudah dibuat untuk pegawai yang akan dianalisis.',
-        'Analisis SAW sudah dijalankan ulang setelah ada perubahan data.',
+        'Rumpun jabatan, jenis pelatihan, dan periode semester sudah dipilih sebelum menjalankan SAW.',
+        'Analisis SAW sudah dijalankan ulang untuk periode yang sesuai setelah ada perubahan data.',
+        'Status kelayakan sudah dicek: nilai SAW di atas 0.9000 menjadi Layak, selain itu Cadangan.',
         'Hasil ranking sudah diperiksa sebelum dicetak sebagai laporan.',
     ];
 
@@ -162,6 +167,29 @@
             'permissions' => ['Dashboard', 'Lihat pegawai', 'Lihat hasil TNA', 'Approve/Reject rekomendasi', 'Laporan'],
             'note' => 'Tidak menginput data; fokus pada monitoring, persetujuan, dan bahan keputusan.',
             'icon' => 'fa-stamp',
+        ],
+    ];
+
+    $analysisPeriodFlow = [
+        [
+            'title' => 'Filter Data',
+            'icon' => 'fa-filter',
+            'plain' => 'Pengguna memilih rumpun jabatan, jenis pelatihan, dan periode semester. Tombol Tampilkan hanya meninjau hasil sesuai filter, tanpa mengubah data.',
+        ],
+        [
+            'title' => 'Proses Analisis',
+            'icon' => 'fa-calculator',
+            'plain' => 'Petugas kepegawaian atau admin menjalankan SAW untuk periode terpilih. Jika rumpun dipilih, sistem hanya menghitung rumpun tersebut.',
+        ],
+        [
+            'title' => 'Simpan Per Periode',
+            'icon' => 'fa-database',
+            'plain' => 'Hasil disimpan dengan tahun dan semester, misalnya 2026 Semester 2. Proses ulang mengganti data pada periode dan rumpun yang sama saja.',
+        ],
+        [
+            'title' => 'Review Hasil',
+            'icon' => 'fa-table-list',
+            'plain' => 'Hasil tetap memakai pagination, menampilkan skor SAW, prioritas, rekomendasi pelatihan, status kelayakan, dan tindak lanjut.',
         ],
     ];
 @endphp
@@ -205,6 +233,48 @@
             <i class="fas fa-ranking-star"></i>
             <h6>Hasil Keluar</h6>
             <p>Sistem menampilkan ranking pegawai dan rekomendasi pelatihan prioritas.</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar-days me-2"></i>
+                Alur Analisis TNA Per Periode
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="section-subtitle mb-3">
+                Halaman Analisis TNA memakai filter server-side agar stabil di server. Hasil analisis tidak hanya ditampilkan sementara, tetapi disimpan berdasarkan tahun dan semester yang dipilih.
+            </p>
+            <div class="analysis-flow-grid mb-3">
+                @foreach($analysisPeriodFlow as $index => $item)
+                    <div class="analysis-flow-card">
+                        <div class="analysis-step-mark">
+                            <span>{{ $index + 1 }}</span>
+                            <i class="fas {{ $item['icon'] }}"></i>
+                        </div>
+                        <h6>{{ $item['title'] }}</h6>
+                        <p>{{ $item['plain'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+            <div class="eligibility-rule">
+                <div class="eligibility-copy">
+                    <strong>Aturan Status Kelayakan</strong>
+                    <span>Status ini membantu pimpinan memilah peserta utama dan peserta cadangan setelah ranking SAW terbentuk.</span>
+                </div>
+                <div class="eligibility-items">
+                    <div class="eligibility-item is-eligible">
+                        <strong>Layak</strong>
+                        <span>Nilai SAW &gt; 0.9000</span>
+                    </div>
+                    <div class="eligibility-item is-reserve">
+                        <strong>Cadangan</strong>
+                        <span>Nilai SAW &lt;= 0.9000</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -655,6 +725,126 @@
         font-weight: 750;
     }
 
+    .analysis-flow-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .analysis-flow-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1rem;
+        background: #fff;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .analysis-step-mark {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .analysis-step-mark span,
+    .analysis-step-mark i {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        font-weight: 800;
+    }
+
+    .analysis-step-mark span {
+        background: var(--ma-dark-green);
+        color: #fff;
+    }
+
+    .analysis-step-mark i {
+        background: var(--ma-light-yellow);
+        color: #6f4d00;
+    }
+
+    .analysis-flow-card h6 {
+        margin: 0;
+        font-weight: 850;
+        color: var(--text-main);
+    }
+
+    .analysis-flow-card p {
+        margin: 0.45rem 0 0;
+        color: var(--text-muted);
+        line-height: 1.55;
+    }
+
+    .eligibility-rule {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1rem;
+        background: var(--flow-soft);
+    }
+
+    .eligibility-copy strong {
+        display: block;
+        color: var(--text-main);
+        font-weight: 850;
+        margin-bottom: 0.25rem;
+    }
+
+    .eligibility-copy span {
+        color: var(--text-muted);
+    }
+
+    .eligibility-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: flex-end;
+        flex: 0 0 auto;
+    }
+
+    .eligibility-item {
+        min-width: 160px;
+        border-radius: 10px;
+        padding: 0.75rem 0.9rem;
+        background: #fff;
+        border: 1px solid var(--line);
+    }
+
+    .eligibility-item strong {
+        display: block;
+        font-weight: 850;
+        margin-bottom: 0.2rem;
+    }
+
+    .eligibility-item span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .eligibility-item.is-eligible {
+        border-color: rgba(0, 112, 72, 0.24);
+    }
+
+    .eligibility-item.is-eligible strong {
+        color: var(--ma-green);
+    }
+
+    .eligibility-item.is-reserve {
+        border-color: rgba(220, 160, 36, 0.34);
+    }
+
+    .eligibility-item.is-reserve strong {
+        color: #946200;
+    }
+
     .saw-process-card {
         border: 1px solid var(--line);
         border-radius: 12px;
@@ -984,7 +1174,8 @@
 
         .saw-process-grid,
         .saw-formula-flow,
-        .role-flow-grid {
+        .role-flow-grid,
+        .analysis-flow-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
@@ -1006,8 +1197,22 @@
 
         .saw-process-grid,
         .saw-formula-flow,
-        .role-flow-grid {
+        .role-flow-grid,
+        .analysis-flow-grid {
             grid-template-columns: 1fr;
+        }
+
+        .eligibility-rule {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .eligibility-items {
+            justify-content: stretch;
+        }
+
+        .eligibility-item {
+            flex: 1 1 180px;
         }
 
         .sticky-guide {
