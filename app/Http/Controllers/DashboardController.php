@@ -37,13 +37,13 @@ class DashboardController extends Controller
             $results = $sawService->calculateTrainingNeeds($employees);
 
             if ($results->isEmpty()) {
-                return redirect()->back()
+                return $this->redirectAfterAnalysis($request, $periodYear, $periodSemester, $jobFamilyCode)
                     ->with('error', "Belum ada hasil SAW untuk {$jobFamilyLabel} {$periodYear} Semester {$periodSemester}. Pastikan pegawai pada rumpun ini sudah memiliki assessment lengkap.");
             }
 
             $created = $sawService->saveTrainingNeeds($results, $periodYear, $periodSemester, $jobFamilyCode);
 
-            return redirect()->back()
+            return $this->redirectAfterAnalysis($request, $periodYear, $periodSemester, $jobFamilyCode)
                 ->with('success', "Analisis {$jobFamilyLabel} {$periodYear} Semester {$periodSemester} berhasil dijalankan. {$created} rekomendasi tersimpan.");
         } catch (\Exception $e) {
             return redirect()->back()
@@ -69,5 +69,18 @@ class DashboardController extends Controller
         }
 
         return array_key_exists($jobFamily, $jobFamilies) ? $jobFamily : null;
+    }
+
+    private function redirectAfterAnalysis(Request $request, int $periodYear, int $periodSemester, ?string $jobFamilyCode)
+    {
+        if (! $request->boolean('return_to_training_needs')) {
+            return redirect()->back();
+        }
+
+        return redirect()->route('training-needs.index', [
+            'job_family' => $jobFamilyCode ?? '',
+            'training_type' => '',
+            'period' => $periodYear . '-S' . $periodSemester,
+        ]);
     }
 }

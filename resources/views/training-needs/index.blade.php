@@ -99,6 +99,7 @@
                                 <input type="hidden" name="period_year" value="{{ $periodYear }}">
                                 <input type="hidden" name="period_semester" value="{{ $periodSemester }}">
                                 <input type="hidden" name="job_family" value="{{ $filters['job_family'] }}">
+                                <input type="hidden" name="return_to_training_needs" value="1">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-calculator me-2"></i>
                                     <span class="btn-label">Proses Analisis</span>

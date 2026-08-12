@@ -16,18 +16,18 @@ class TrainingNeedController extends Controller
         Access::denyIfCannotAny(['training-needs.view', 'training-needs.manage']);
 
         $jobFamilies = $this->jobFamilyOptions();
-        $filters = [
-            'job_family' => $this->normalizeJobFamilyFilter($request->input('job_family', 'HK'), $jobFamilies),
-            'training_type' => $request->input('training_type', ''),
-            'period' => $this->normalizePeriodFilter($request->input('period', $this->periodKey((int) now()->year, now()->month <= 6 ? 1 : 2))),
-        ];
-        [$periodYear, $periodSemester] = $this->periodParts($filters['period']);
-        $periods = $this->periodOptions();
         $trainingTypes = TrainingNeed::query()
             ->select('training_type')
             ->distinct()
             ->orderBy('training_type')
             ->pluck('training_type');
+        $filters = [
+            'job_family' => $this->normalizeJobFamilyFilter($request->input('job_family', 'HK'), $jobFamilies),
+            'training_type' => $this->normalizeTrainingTypeFilter($request->input('training_type', ''), $trainingTypes),
+            'period' => $this->normalizePeriodFilter($request->input('period', $this->periodKey((int) now()->year, now()->month <= 6 ? 1 : 2))),
+        ];
+        [$periodYear, $periodSemester] = $this->periodParts($filters['period']);
+        $periods = $this->periodOptions();
 
         $trainingNeedsQuery = TrainingNeed::with(['employee.position.jobFamily'])
             ->orderBy('priority_rank');
@@ -36,7 +36,7 @@ class TrainingNeedController extends Controller
 
         $trainingNeeds = $trainingNeedsQuery
             ->paginate(10)
-            ->withQueryString();
+            ->appends($filters);
         $summary = $this->buildTrainingNeedSummary($filters, $periodYear, $periodSemester);
         $selectedGroupLabel = $filters['job_family'] !== ''
             ? ($jobFamilies[$filters['job_family']] ?? 'Rumpun Terpilih')
@@ -291,6 +291,17 @@ class TrainingNeedController extends Controller
         return preg_match('/^\\d{4}-S[12]$/', $period)
             ? $period
             : $this->periodKey((int) now()->year, now()->month <= 6 ? 1 : 2);
+    }
+
+    private function normalizeTrainingTypeFilter(?string $trainingType, $trainingTypes): string
+    {
+        $trainingType = trim((string) $trainingType);
+
+        if ($trainingType === '' || strtolower($trainingType) === 'all' || str_contains(strtolower($trainingType), 'semua')) {
+            return '';
+        }
+
+        return $trainingTypes->contains($trainingType) ? $trainingType : '';
     }
 
     private function periodOptions()
