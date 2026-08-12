@@ -26,7 +26,209 @@
         </h5>
     </div>
     <div class="card-body">
-        <livewire:training-needs-list />
+        @php
+            $statusLabels = [
+                'pending' => 'Pending',
+                'approved' => 'Disetujui',
+                'rejected' => 'Ditolak',
+                'completed' => 'Selesai',
+            ];
+
+            $statusClasses = [
+                'pending' => 'status-pending',
+                'approved' => 'status-approved',
+                'rejected' => 'status-rejected',
+                'completed' => 'status-completed',
+            ];
+        @endphp
+
+        <div class="tna-simple">
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger">{{ session('error') }}</div>
+            @endif
+
+            <section class="simple-filter">
+                <h6>Filter Data</h6>
+                <form action="{{ route('training-needs.index') }}" method="GET">
+                    <div class="filter-grid">
+                        <label>
+                            <span>Rumpun Jabatan</span>
+                            <select name="job_family" class="form-select">
+                                <option value="">Semua Rumpun</option>
+                                @foreach($jobFamilies as $code => $label)
+                                    <option value="{{ $code }}" @selected($filters['job_family'] === $code)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>
+                            <span>Jenis Pelatihan</span>
+                            <select name="training_type" class="form-select">
+                                <option value="">Semua</option>
+                                @foreach($trainingTypes as $trainingType)
+                                    <option value="{{ $trainingType }}" @selected($filters['training_type'] === $trainingType)>{{ $trainingType }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>
+                            <span>Periode</span>
+                            <select name="period" class="form-select">
+                                <option value="">Semua Periode</option>
+                                @foreach($periods as $period)
+                                    <option value="{{ $period['key'] }}" @selected($filters['period'] === $period['key'])>{{ $period['label'] }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                    </div>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-eye me-2"></i>
+                            Tampilkan
+                        </button>
+                        @if(request()->hasAny(['job_family', 'training_type', 'period']))
+                            <a href="{{ route('training-needs.index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-rotate-left me-2"></i>
+                                Reset
+                            </a>
+                        @endif
+                    </div>
+                </form>
+
+                @if(\App\Support\Access::allows('analysis.run'))
+                    <form action="{{ route('run-analysis') }}" method="POST" class="text-center mt-2" onsubmit="this.querySelector('button').disabled = true; this.querySelector('.btn-label').textContent = 'Memproses...';">
+                        @csrf
+                        <input type="hidden" name="period_year" value="{{ $periodYear }}">
+                        <input type="hidden" name="period_semester" value="{{ $periodSemester }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-calculator me-2"></i>
+                            <span class="btn-label">Proses Analisis {{ $periodYear }} Semester {{ $periodSemester }}</span>
+                        </button>
+                    </form>
+                @endif
+            </section>
+
+            <section class="simple-summary">
+                <div><span>Jumlah Pegawai</span><strong>{{ $summary['total_employees'] }}</strong></div>
+                <div><span>Sudah Mengikuti Pelatihan</span><strong>{{ $summary['trained_employees'] }}</strong></div>
+                <div><span>Belum Mengikuti Pelatihan</span><strong>{{ $summary['untrained_employees'] }}</strong></div>
+                <div><span>Kuota Pelatihan</span><strong>{{ $summary['quota'] }} Orang</strong></div>
+            </section>
+
+            <section class="simple-group">
+                <div class="group-title">
+                    <h5>{{ $selectedGroupLabel }}</h5>
+                    <span>{{ $trainingNeeds->total() }} rekomendasi pelatihan</span>
+                </div>
+
+                @if($trainingNeeds->count() > 0)
+                    <div class="table-responsive simple-table-shell">
+                        <table class="table align-middle simple-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Pegawai</th>
+                                    <th>Jabatan</th>
+                                    <th>Nilai SAW</th>
+                                    <th>Prioritas</th>
+                                    <th>Rekomendasi Pelatihan</th>
+                                    <th>Status Kelayakan</th>
+                                    <th>Tindak Lanjut</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($trainingNeeds as $need)
+                                    @php
+                                        $priorityLabel = match (true) {
+                                            (float) $need->saw_score >= 0.85 => 'Sangat Tinggi',
+                                            (float) $need->saw_score >= 0.70 => 'Tinggi',
+                                            (float) $need->saw_score >= 0.55 => 'Sedang',
+                                            default => 'Rendah',
+                                        };
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $trainingNeeds->firstItem() + $loop->index }}</td>
+                                        <td>
+                                            <strong>{{ $need->employee->name }}</strong>
+                                            <small>{{ $need->employee->nip }}</small>
+                                        </td>
+                                        <td>{{ $need->employee->position->name }}</td>
+                                        <td><strong>{{ number_format((float) $need->saw_score, 4) }}</strong></td>
+                                        <td>{{ $priorityLabel }}</td>
+                                        <td>{{ $need->training_type }}</td>
+                                        <td>
+                                            <span class="simple-status {{ $need->eligibility_label === 'Layak' ? 'status-eligible' : 'status-reserve' }}">
+                                                {{ $need->eligibility_label }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="simple-status {{ $statusClasses[$need->status] ?? 'status-pending' }}">
+                                                {{ $statusLabels[$need->status] ?? ucfirst($need->status) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="simple-actions">
+                                                <a href="{{ route('training-needs.show', $need) }}" class="btn btn-sm btn-outline-info" title="Detail">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                @if($need->status === 'pending' && \App\Support\Access::allows('training-needs.approve'))
+                                                    <form action="{{ route('training-needs.update', $need) }}" method="POST">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <input type="hidden" name="status" value="approved">
+                                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Setujui">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    </form>
+                                                    <form action="{{ route('training-needs.update', $need) }}" method="POST">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <input type="hidden" name="status" value="rejected">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Tolak">
+                                                            <i class="fas fa-xmark"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                                @if($need->status === 'approved' && \App\Support\Access::allows('training-needs.manage'))
+                                                    <form action="{{ route('training-needs.update', $need) }}" method="POST">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <input type="hidden" name="status" value="completed">
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="Selesai">
+                                                            <i class="fas fa-flag-checkered"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                                @if(\App\Support\Access::allows('training-needs.manage'))
+                                                    <form action="{{ route('training-needs.destroy', $need) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus data ini?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="simple-pagination">
+                        {{ $trainingNeeds->links() }}
+                    </div>
+                @else
+                    <div class="simple-empty">
+                        Belum ada hasil analisis sesuai filter. Jalankan proses analisis SAW atau ubah filter data.
+                    </div>
+                @endif
+            </section>
+        </div>
     </div>
 </div>
 
@@ -141,6 +343,169 @@
 </details>
 
 <style>
+    .tna-simple {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .simple-filter {
+        padding-bottom: 1.25rem;
+        border-bottom: 1px dashed var(--line);
+    }
+
+    .simple-filter h6 {
+        margin: 0 0 1rem;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .filter-grid label {
+        display: grid;
+        gap: 0.4rem;
+    }
+
+    .filter-grid span,
+    .simple-summary span,
+    .group-title span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .filter-actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .simple-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.85rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px dashed var(--line);
+    }
+
+    .simple-summary div {
+        display: grid;
+        gap: 0.25rem;
+        padding: 0.8rem 0.9rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfd;
+    }
+
+    .simple-summary strong {
+        color: var(--text-main);
+        font-size: 1.25rem;
+    }
+
+    .simple-group {
+        display: grid;
+        gap: 0.8rem;
+    }
+
+    .group-title h5 {
+        margin: 0;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .simple-table-shell {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .simple-table {
+        margin: 0;
+    }
+
+    .simple-table th {
+        background: #f8fafc;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+    }
+
+    .simple-table td {
+        border-bottom: 1px solid #eef2f6;
+    }
+
+    .simple-table td small {
+        display: block;
+        color: var(--text-muted);
+        margin-top: 0.15rem;
+    }
+
+    .simple-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.58rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #7a4d00;
+    }
+
+    .status-approved,
+    .status-eligible {
+        background: var(--ma-light-green);
+        color: var(--ma-dark-green);
+    }
+
+    .status-reserve {
+        background: var(--ma-light-yellow);
+        color: #6f4e00;
+    }
+
+    .status-rejected {
+        background: #fde2e2;
+        color: #991b1b;
+    }
+
+    .status-completed {
+        background: #e0f2fe;
+        color: #075985;
+    }
+
+    .simple-actions {
+        display: inline-flex;
+        gap: 0.25rem;
+    }
+
+    .simple-actions form {
+        margin: 0;
+    }
+
+    .simple-empty {
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        padding: 1.5rem;
+        color: var(--text-muted);
+        text-align: center;
+        background: #fbfcfd;
+    }
+
+    .simple-pagination {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 0.75rem;
+    }
+
     .saw-stage-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -221,7 +586,27 @@
         }
     }
 
+    @media (max-width: 991.98px) {
+        .filter-grid,
+        .simple-summary {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
     @media (max-width: 575.98px) {
+        .filter-grid,
+        .simple-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-actions {
+            flex-direction: column;
+        }
+
+        .filter-actions .btn {
+            width: 100%;
+        }
+
         .saw-stage-grid {
             grid-template-columns: 1fr;
         }

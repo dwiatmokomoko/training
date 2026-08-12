@@ -11,16 +11,49 @@ use App\Support\Access;
 
 class TrainingNeedController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         Access::denyIfCannotAny(['training-needs.view', 'training-needs.manage']);
 
-        $trainingNeeds = TrainingNeed::with(['employee.position'])
-            ->orderBy('priority_rank')
-            ->paginate(15);
+        $filters = [
+            'job_family' => $request->input('job_family', 'HK'),
+            'training_type' => $request->input('training_type', ''),
+            'period' => $request->input('period', $this->periodKey((int) now()->year, now()->month <= 6 ? 1 : 2)),
+        ];
+        [$periodYear, $periodSemester] = $this->periodParts($filters['period']);
+        $jobFamilies = $this->jobFamilyOptions();
+        $periods = $this->periodOptions();
+        $trainingTypes = TrainingNeed::query()
+            ->select('training_type')
+            ->distinct()
+            ->orderBy('training_type')
+            ->pluck('training_type');
+
+        $trainingNeedsQuery = TrainingNeed::with(['employee.position.jobFamily'])
+            ->orderBy('priority_rank');
+
+        $this->applyTrainingNeedFilters($trainingNeedsQuery, $filters, $periodYear, $periodSemester);
+
+        $trainingNeeds = $trainingNeedsQuery
+            ->paginate(10)
+            ->withQueryString();
+        $summary = $this->buildTrainingNeedSummary($filters, $periodYear, $periodSemester);
+        $selectedGroupLabel = $filters['job_family'] !== ''
+            ? ($jobFamilies[$filters['job_family']] ?? 'Rumpun Terpilih')
+            : 'Semua Rumpun';
         $sawData = $this->buildSawViewData();
 
-        return view('training-needs.index', array_merge(compact('trainingNeeds'), $sawData));
+        return view('training-needs.index', array_merge(compact(
+            'trainingNeeds',
+            'filters',
+            'periodYear',
+            'periodSemester',
+            'jobFamilies',
+            'periods',
+            'trainingTypes',
+            'summary',
+            'selectedGroupLabel'
+        ), $sawData));
     }
 
     public function show(TrainingNeed $trainingNeed)
@@ -50,7 +83,7 @@ class TrainingNeedController extends Controller
             'notes' => $request->notes
         ]);
 
-        return redirect()->route('training-needs.index')
+        return redirect()->back()
             ->with('success', 'Status pelatihan berhasil diperbarui!');
     }
 
@@ -60,7 +93,7 @@ class TrainingNeedController extends Controller
 
         $trainingNeed->delete();
 
-        return redirect()->route('training-needs.index')
+        return redirect()->back()
             ->with('success', 'Data kebutuhan pelatihan berhasil dihapus!');
     }
 
@@ -154,6 +187,122 @@ class TrainingNeedController extends Controller
             'criteriaScaleRows' => $this->criteriaScaleRows(),
             'preferenceRows' => $preferenceRows,
         ];
+    }
+
+    private function applyTrainingNeedFilters($query, array $filters, int $periodYear, int $periodSemester): void
+    {
+        if ($filters['job_family'] !== '') {
+            $query->whereHas('employee.position.jobFamily', function ($jobFamilyQuery) use ($filters) {
+                $jobFamilyQuery->where('code', $filters['job_family']);
+            });
+        }
+
+        if ($filters['training_type'] !== '') {
+            $query->where('training_type', $filters['training_type']);
+        }
+
+        if ($filters['period'] !== '') {
+            [$startMonth, $endMonth] = $this->semesterMonths($periodSemester);
+
+            $query->where(function ($periodQuery) use ($periodYear, $periodSemester, $startMonth, $endMonth) {
+                $periodQuery->where(function ($storedPeriodQuery) use ($periodYear, $periodSemester) {
+                    $storedPeriodQuery->where('period_year', $periodYear)
+                        ->where('period_semester', $periodSemester);
+                })->orWhere(function ($fallbackQuery) use ($periodYear, $startMonth, $endMonth) {
+                    $fallbackQuery->whereNull('period_year')
+                        ->whereYear('recommended_date', $periodYear)
+                        ->whereMonth('recommended_date', '>=', $startMonth)
+                        ->whereMonth('recommended_date', '<=', $endMonth);
+                });
+            });
+        }
+    }
+
+    private function buildTrainingNeedSummary(array $filters, int $periodYear, int $periodSemester): array
+    {
+        $employeeQuery = Employee::query();
+
+        if ($filters['job_family'] !== '') {
+            $employeeQuery->whereHas('position.jobFamily', function ($jobFamilyQuery) use ($filters) {
+                $jobFamilyQuery->where('code', $filters['job_family']);
+            });
+        }
+
+        [$startMonth, $endMonth] = $this->semesterMonths($periodSemester);
+        $totalEmployees = (clone $employeeQuery)->count();
+        $trainedEmployees = (clone $employeeQuery)
+            ->whereHas('trainingHistories', function ($historyQuery) use ($filters, $periodYear, $startMonth, $endMonth) {
+                if ($filters['training_type'] !== '') {
+                    $historyQuery->where('training_name', $filters['training_type']);
+                }
+
+                if ($filters['period'] !== '') {
+                    $historyQuery->where(function ($dateQuery) use ($periodYear, $startMonth, $endMonth) {
+                        $dateQuery->where(function ($startQuery) use ($periodYear, $startMonth, $endMonth) {
+                            $startQuery->whereYear('start_date', $periodYear)
+                                ->whereMonth('start_date', '>=', $startMonth)
+                                ->whereMonth('start_date', '<=', $endMonth);
+                        })->orWhere(function ($endQuery) use ($periodYear, $startMonth, $endMonth) {
+                            $endQuery->whereYear('end_date', $periodYear)
+                                ->whereMonth('end_date', '>=', $startMonth)
+                                ->whereMonth('end_date', '<=', $endMonth);
+                        });
+                    });
+                }
+            })
+            ->count();
+
+        return [
+            'total_employees' => $totalEmployees,
+            'trained_employees' => $trainedEmployees,
+            'untrained_employees' => max($totalEmployees - $trainedEmployees, 0),
+            'quota' => 10,
+        ];
+    }
+
+    private function jobFamilyOptions(): array
+    {
+        return [
+            'HK' => 'Hakim',
+            'KP' => 'Kepaniteraan',
+            'KS' => 'Kesekretariatan',
+        ];
+    }
+
+    private function periodOptions()
+    {
+        $currentYear = now()->year;
+        $options = collect();
+
+        foreach (range($currentYear, $currentYear - 4) as $year) {
+            foreach ([2, 1] as $semester) {
+                $options->push([
+                    'key' => $this->periodKey($year, $semester),
+                    'label' => $year . ' Semester ' . $semester,
+                ]);
+            }
+        }
+
+        return $options;
+    }
+
+    private function periodKey(int $year, int $semester): string
+    {
+        return $year . '-S' . $semester;
+    }
+
+    private function periodParts(?string $period): array
+    {
+        if (! preg_match('/^(\\d{4})-S([12])$/', (string) $period, $matches)) {
+            return [(int) now()->year, now()->month <= 6 ? 1 : 2];
+        }
+
+        return [(int) $matches[1], (int) $matches[2]];
+    }
+
+    private function semesterMonths(int $semester): array
+    {
+        return $semester === 1 ? [1, 6] : [7, 12];
     }
 
     private function criteriaScaleRows(): array
