@@ -13,7 +13,7 @@ class SAWService
     /**
      * Hitung analisis kebutuhan pelatihan menggunakan metode SAW
      */
-    public function calculateTrainingNeeds(): Collection
+    public function calculateTrainingNeeds(?Collection $employees = null): Collection
     {
         $criteria = Criteria::latestTna()->get();
         
@@ -21,7 +21,7 @@ class SAWService
             return collect();
         }
 
-        $matrix = $this->buildDecisionMatrix(criteria: $criteria);
+        $matrix = $this->buildDecisionMatrix(employees: $employees, criteria: $criteria);
 
         if ($matrix->isEmpty()) {
             return collect();
@@ -383,15 +383,23 @@ class SAWService
     /**
      * Simpan hasil analisis ke database
      */
-    public function saveTrainingNeeds(Collection $results, ?int $periodYear = null, ?int $periodSemester = null): void
+    public function saveTrainingNeeds(Collection $results, ?int $periodYear = null, ?int $periodSemester = null, ?string $jobFamilyCode = null): int
     {
         $periodYear ??= (int) now()->year;
         $periodSemester ??= now()->month <= 6 ? 1 : 2;
         $periodLabel = $periodYear . ' Semester ' . $periodSemester;
 
-        TrainingNeed::where('period_year', $periodYear)
+        $deleteQuery = TrainingNeed::where('period_year', $periodYear)
             ->where('period_semester', $periodSemester)
-            ->delete();
+            ->when($jobFamilyCode, function ($query) use ($jobFamilyCode) {
+                $query->whereHas('employee.position.jobFamily', function ($jobFamilyQuery) use ($jobFamilyCode) {
+                    $jobFamilyQuery->where('code', $jobFamilyCode);
+                });
+            });
+
+        $deleteQuery->delete();
+
+        $created = 0;
 
         foreach ($results as $index => $result) {
             $employee = $result['employee'];
@@ -414,7 +422,11 @@ class SAWService
                     'period_label' => $periodLabel,
                     'notes' => "Prioritas: {$recommendation['priority']}, Urgensi: {$recommendation['urgency_level']}"
                 ]);
+
+                $created++;
             }
         }
+
+        return $created;
     }
 }

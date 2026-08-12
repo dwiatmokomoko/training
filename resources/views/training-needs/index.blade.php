@@ -43,14 +43,6 @@
         @endphp
 
         <div class="tna-simple">
-            @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger">{{ session('error') }}</div>
-            @endif
-
             <section class="simple-filter">
                 <h6>Filter Data</h6>
                 <form action="{{ route('training-needs.index') }}" method="GET">
@@ -102,6 +94,7 @@
                         @csrf
                         <input type="hidden" name="period_year" value="{{ $periodYear }}">
                         <input type="hidden" name="period_semester" value="{{ $periodSemester }}">
+                        <input type="hidden" name="job_family" value="{{ $filters['job_family'] }}">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-calculator me-2"></i>
                             <span class="btn-label">Proses Analisis {{ $periodYear }} Semester {{ $periodSemester }}</span>
