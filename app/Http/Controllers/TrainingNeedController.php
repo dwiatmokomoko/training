@@ -15,13 +15,13 @@ class TrainingNeedController extends Controller
     {
         Access::denyIfCannotAny(['training-needs.view', 'training-needs.manage']);
 
+        $jobFamilies = $this->jobFamilyOptions();
         $filters = [
-            'job_family' => $request->input('job_family', 'HK'),
+            'job_family' => $this->normalizeJobFamilyFilter($request->input('job_family', 'HK'), $jobFamilies),
             'training_type' => $request->input('training_type', ''),
-            'period' => $request->input('period', $this->periodKey((int) now()->year, now()->month <= 6 ? 1 : 2)),
+            'period' => $this->normalizePeriodFilter($request->input('period', $this->periodKey((int) now()->year, now()->month <= 6 ? 1 : 2))),
         ];
         [$periodYear, $periodSemester] = $this->periodParts($filters['period']);
-        $jobFamilies = $this->jobFamilyOptions();
         $periods = $this->periodOptions();
         $trainingTypes = TrainingNeed::query()
             ->select('training_type')
@@ -267,6 +267,30 @@ class TrainingNeedController extends Controller
             'KP' => 'Kepaniteraan',
             'KS' => 'Kesekretariatan',
         ];
+    }
+
+    private function normalizeJobFamilyFilter(?string $jobFamily, array $jobFamilies): string
+    {
+        $jobFamily = trim((string) $jobFamily);
+
+        if ($jobFamily === '' || strtolower($jobFamily) === 'all' || str_contains(strtolower($jobFamily), 'semua')) {
+            return '';
+        }
+
+        return array_key_exists($jobFamily, $jobFamilies) ? $jobFamily : '';
+    }
+
+    private function normalizePeriodFilter(?string $period): string
+    {
+        $period = trim((string) $period);
+
+        if ($period === '' || strtolower($period) === 'all' || str_contains(strtolower($period), 'semua')) {
+            return '';
+        }
+
+        return preg_match('/^\\d{4}-S[12]$/', $period)
+            ? $period
+            : $this->periodKey((int) now()->year, now()->month <= 6 ? 1 : 2);
     }
 
     private function periodOptions()

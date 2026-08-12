@@ -45,7 +45,7 @@
         <div class="tna-simple">
             <section class="simple-filter">
                 <h6>Filter Data</h6>
-                <form action="{{ route('training-needs.index') }}" method="GET">
+                <form id="trainingNeedsFilterForm" action="{{ route('training-needs.index') }}" method="GET">
                     <div class="filter-grid">
                         <label>
                             <span>Rumpun Jabatan</span>
@@ -75,8 +75,15 @@
                             </select>
                         </label>
                     </div>
+                </form>
+
+                <div class="filter-command-row">
+                    <div class="filter-context">
+                        <strong>{{ $selectedGroupLabel }}</strong>
+                        <span>{{ $periodYear }} Semester {{ $periodSemester }}</span>
+                    </div>
                     <div class="filter-actions">
-                        <button type="submit" class="btn btn-outline-primary">
+                        <button type="submit" form="trainingNeedsFilterForm" class="btn btn-outline-primary">
                             <i class="fas fa-eye me-2"></i>
                             Tampilkan
                         </button>
@@ -86,21 +93,20 @@
                                 Reset
                             </a>
                         @endif
+                        @if(\App\Support\Access::allows('analysis.run'))
+                            <form action="{{ route('run-analysis') }}" method="POST" class="process-form" onsubmit="this.querySelector('button').disabled = true; this.querySelector('.btn-label').textContent = 'Memproses...';">
+                                @csrf
+                                <input type="hidden" name="period_year" value="{{ $periodYear }}">
+                                <input type="hidden" name="period_semester" value="{{ $periodSemester }}">
+                                <input type="hidden" name="job_family" value="{{ $filters['job_family'] }}">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    <span class="btn-label">Proses Analisis</span>
+                                </button>
+                            </form>
+                        @endif
                     </div>
-                </form>
-
-                @if(\App\Support\Access::allows('analysis.run'))
-                    <form action="{{ route('run-analysis') }}" method="POST" class="text-center mt-2" onsubmit="this.querySelector('button').disabled = true; this.querySelector('.btn-label').textContent = 'Memproses...';">
-                        @csrf
-                        <input type="hidden" name="period_year" value="{{ $periodYear }}">
-                        <input type="hidden" name="period_semester" value="{{ $periodSemester }}">
-                        <input type="hidden" name="job_family" value="{{ $filters['job_family'] }}">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-calculator me-2"></i>
-                            <span class="btn-label">Proses Analisis {{ $periodYear }} Semester {{ $periodSemester }}</span>
-                        </button>
-                    </form>
-                @endif
+                </div>
             </section>
 
             <section class="simple-summary">
@@ -370,11 +376,43 @@
         font-size: 0.9rem;
     }
 
+    .filter-command-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .filter-context {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .filter-context strong {
+        color: var(--text-main);
+    }
+
+    .filter-context span {
+        padding: 0.3rem 0.6rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #fbfcfd;
+    }
+
     .filter-actions {
         display: flex;
-        justify-content: center;
-        gap: 0.75rem;
-        margin-top: 1.5rem;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .process-form {
+        margin: 0;
     }
 
     .simple-summary {
@@ -592,11 +630,22 @@
             grid-template-columns: 1fr;
         }
 
+        .filter-command-row {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .filter-context {
+            justify-content: space-between;
+        }
+
         .filter-actions {
             flex-direction: column;
         }
 
-        .filter-actions .btn {
+        .filter-actions .btn,
+        .filter-actions .process-form,
+        .filter-actions .process-form .btn {
             width: 100%;
         }
 

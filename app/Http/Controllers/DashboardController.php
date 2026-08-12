@@ -23,8 +23,9 @@ class DashboardController extends Controller
         try {
             $periodYear = (int) $request->input('period_year', now()->year);
             $periodSemester = (int) $request->input('period_semester', now()->month <= 6 ? 1 : 2);
-            $jobFamilyCode = $request->input('job_family') ?: null;
-            $jobFamilyLabel = $this->jobFamilyOptions()[$jobFamilyCode] ?? 'Semua Rumpun';
+            $jobFamilies = $this->jobFamilyOptions();
+            $jobFamilyCode = $this->normalizeJobFamilyFilter($request->input('job_family'), $jobFamilies);
+            $jobFamilyLabel = $jobFamilyCode ? $jobFamilies[$jobFamilyCode] : 'Semua Rumpun';
             $employees = Employee::with(['assessments.scores.criteria', 'position.jobFamily', 'workUnit', 'trainingHistories'])
                 ->when($jobFamilyCode, function ($query) use ($jobFamilyCode) {
                     $query->whereHas('position.jobFamily', function ($jobFamilyQuery) use ($jobFamilyCode) {
@@ -57,5 +58,16 @@ class DashboardController extends Controller
             'KP' => 'Kepaniteraan',
             'KS' => 'Kesekretariatan',
         ];
+    }
+
+    private function normalizeJobFamilyFilter(?string $jobFamily, array $jobFamilies): ?string
+    {
+        $jobFamily = trim((string) $jobFamily);
+
+        if ($jobFamily === '' || strtolower($jobFamily) === 'all' || str_contains(strtolower($jobFamily), 'semua')) {
+            return null;
+        }
+
+        return array_key_exists($jobFamily, $jobFamilies) ? $jobFamily : null;
     }
 }
