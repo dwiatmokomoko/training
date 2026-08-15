@@ -5,6 +5,16 @@
 @section('page-subtitle', 'Input penilaian pegawai berdasarkan kriteria SAW')
 
 @section('content')
+@php
+    $scoreOptions = [
+        1 => ['range' => '<= 60', 'label' => 'Sangat Kurang'],
+        2 => ['range' => '61-70', 'label' => 'Kurang'],
+        3 => ['range' => '71-80', 'label' => 'Cukup'],
+        4 => ['range' => '81-90', 'label' => 'Baik'],
+        5 => ['range' => '91-100', 'label' => 'Sangat Baik'],
+    ];
+@endphp
+
 <div class="row justify-content-center">
     <div class="col-lg-10">
         <div class="card">
@@ -53,12 +63,12 @@
                     <div class="row">
                         <div class="col-12">
                             <h6 class="mb-3">
-                                <i class="fas fa-star me-2"></i>
+                                <i class="fas fa-table-list me-2"></i>
                                 Kriteria Penilaian
                             </h6>
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Berikan nilai capaian kinerja dengan skala 1-5. Untuk kriteria cost, nilai lebih rendah menunjukkan kebutuhan pelatihan lebih tinggi.
+                                Pilih kategori nilai capaian kinerja. Sistem tetap mengonversi pilihan menjadi skala 1-5 untuk perhitungan SAW.
                             </div>
                         </div>
                     </div>
@@ -77,10 +87,13 @@
                                     @endif
                                 </div>
                                 <div class="col-md-8">
-                                    <div class="row">
-                                        @for($i = 1; $i <= 5; $i++)
-                                        <div class="col">
-                                            <div class="form-check text-center">
+                                    <div class="score-option-head">
+                                        <span>Nilai Capaian</span>
+                                        <span>Kategori</span>
+                                    </div>
+                                    <div class="score-option-list">
+                                        @foreach($scoreOptions as $i => $option)
+                                            <div class="form-check">
                                                 <input class="form-check-input @error('scores.' . $criterion->id) is-invalid @enderror" 
                                                        type="radio" 
                                                        name="scores[{{ $criterion->id }}]" 
@@ -89,28 +102,15 @@
                                                        {{ old('scores.' . $criterion->id) == $i ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="score_{{ $criterion->id }}_{{ $i }}">
                                                     <div class="score-option">
-                                                        <div class="score-number">{{ $i }}</div>
-                                                        <div class="score-stars">
-                                                            @for($j = 1; $j <= $i; $j++)
-                                                                <i class="fas fa-star text-warning"></i>
-                                                            @endfor
-                                                            @for($j = $i + 1; $j <= 5; $j++)
-                                                                <i class="far fa-star text-muted"></i>
-                                                            @endfor
+                                                        <div class="score-range">{{ $option['range'] }}</div>
+                                                        <div class="score-category">
+                                                            <span>{{ $option['label'] }}</span>
+                                                            <small>Skor {{ $i }}</small>
                                                         </div>
-                                                        <small class="score-label">
-                                                            @if($i == 1) Sangat Kurang
-                                                            @elseif($i == 2) Kurang
-                                                            @elseif($i == 3) Cukup
-                                                            @elseif($i == 4) Baik
-                                                            @else Sangat Baik
-                                                            @endif
-                                                        </small>
                                                     </div>
                                                 </label>
                                             </div>
-                                        </div>
-                                        @endfor
+                                        @endforeach
                                     </div>
                                     @error('scores.' . $criterion->id)
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -152,39 +152,115 @@
 </div>
 
 <style>
+.score-option-head {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    background: #f8faf9;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.score-option-list {
+    display: grid;
+    border: 1px solid var(--line);
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+}
+
+.score-option-list .form-check {
+    position: relative;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.score-option-list .form-check:not(:last-child) {
+    border-bottom: 1px solid var(--line);
+}
+
+.score-option-list .form-check-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.score-option-list .form-check-label {
+    display: block;
+    margin: 0;
+}
+
 .score-option {
-    padding: 10px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.9rem 1rem;
+    background: #ffffff;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
 }
 
 .score-option:hover {
-    background-color: rgba(34, 139, 34, 0.1);
+    background-color: #f6fbf8;
 }
 
 .form-check-input:checked + .form-check-label .score-option {
-    background-color: var(--ma-green);
-    color: white;
+    background-color: #effaf3;
+    box-shadow: inset 4px 0 0 var(--ma-green);
 }
 
-.form-check-input:checked + .form-check-label .score-option .score-stars i {
-    color: var(--ma-yellow) !important;
+.score-range {
+    color: var(--text-main);
+    font-weight: 850;
 }
 
-.score-number {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 5px;
+.score-category {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
 }
 
-.score-stars {
-    margin-bottom: 5px;
+.score-category span {
+    color: var(--text-main);
+    font-weight: 750;
 }
 
-.score-label {
+.score-category small {
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    background: var(--ma-light-yellow);
+    color: #6f4d00;
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.form-check-input:checked + .form-check-label .score-category small {
+    background: var(--ma-green);
+    color: #ffffff;
+}
+
+@media (max-width: 575.98px) {
+    .score-option-head {
+        display: none;
+    }
+
+    .score-option {
+        grid-template-columns: 1fr;
+    }
+
+    .score-category {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
 </style>
 @endsection
