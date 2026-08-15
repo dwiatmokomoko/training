@@ -40,13 +40,15 @@ class AssessmentController extends Controller
     {
         Access::denyIfCannot('assessments.manage');
 
-        $request->validate([
+        $criteria = Criteria::latestTna()->get();
+
+        $request->validate(array_merge([
             'employee_id' => 'required|exists:employees,id',
             'assessment_date' => 'required|date',
             'scores' => 'required|array',
-            'scores.*' => 'required|integer|min:1|max:5',
+            'scores.*' => 'integer|min:1|max:5',
             'notes' => 'nullable|string'
-        ]);
+        ], $this->scoreValidationRules($criteria)));
 
         // Create the main assessment record
         $assessment = Assessment::create([
@@ -58,7 +60,6 @@ class AssessmentController extends Controller
 
         $totalScore = 0;
         $totalWeight = 0;
-        $criteria = Criteria::latestTna()->get();
 
         // Create assessment scores for each criteria
         foreach ($request->scores as $criteriaId => $score) {
@@ -104,13 +105,15 @@ class AssessmentController extends Controller
     {
         Access::denyIfCannot('assessments.manage');
 
-        $request->validate([
+        $criteria = Criteria::latestTna()->get();
+
+        $request->validate(array_merge([
             'employee_id' => 'required|exists:employees,id',
             'assessment_date' => 'required|date',
             'scores' => 'required|array',
-            'scores.*' => 'required|integer|min:1|max:5',
+            'scores.*' => 'integer|min:1|max:5',
             'notes' => 'nullable|string'
-        ]);
+        ], $this->scoreValidationRules($criteria)));
 
         // Update the main assessment record
         $assessment->update([
@@ -121,7 +124,6 @@ class AssessmentController extends Controller
 
         $totalScore = 0;
         $totalWeight = 0;
-        $criteria = Criteria::latestTna()->get();
 
         // Update assessment scores for each criteria
         foreach ($request->scores as $criteriaId => $score) {
@@ -169,13 +171,15 @@ class AssessmentController extends Controller
     {
         Access::denyIfCannot('assessments.manage');
 
-        $request->validate([
+        $criteria = Criteria::latestTna()->get();
+
+        $request->validate(array_merge([
             'employee_id' => 'required|exists:employees,id',
             'assessment_date' => 'required|date',
             'scores' => 'required|array',
-            'scores.*' => 'required|integer|min:1|max:5',
+            'scores.*' => 'integer|min:1|max:5',
             'notes' => 'nullable|string'
-        ]);
+        ], $this->scoreValidationRules($criteria)));
 
         // Check if assessment already exists for this employee
         $existingAssessment = Assessment::where('employee_id', $request->employee_id)
@@ -198,7 +202,6 @@ class AssessmentController extends Controller
 
         $totalScore = 0;
         $totalWeight = 0;
-        $criteria = Criteria::latestTna()->get();
 
         // Create assessment scores for each criteria
         foreach ($request->scores as $criteriaId => $score) {
@@ -220,5 +223,14 @@ class AssessmentController extends Controller
 
         return redirect()->route('assessments.index')
             ->with('success', 'Penilaian bulk berhasil ditambahkan!');
+    }
+
+    private function scoreValidationRules($criteria): array
+    {
+        return $criteria
+            ->mapWithKeys(fn (Criteria $criterion) => [
+                'scores.' . $criterion->id => 'required|integer|min:1|max:5',
+            ])
+            ->all();
     }
 }
