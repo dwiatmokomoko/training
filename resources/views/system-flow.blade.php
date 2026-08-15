@@ -21,9 +21,9 @@
             'title' => 'Input Data Pegawai',
             'short' => 'Siapa yang dinilai',
             'icon' => 'fa-users',
-            'plain' => 'Masukkan profil pegawai agar sistem bisa membaca usia, masa jabatan, riwayat promosi, dan riwayat pelatihan.',
+            'plain' => 'Masukkan profil pegawai sebagai identitas dan data pendukung laporan, termasuk jabatan, unit kerja, riwayat promosi, dan riwayat pelatihan.',
             'prepare' => ['NIP, nama, tanggal lahir, jenis kelamin', 'Jabatan saat ini dan unit kerja', 'TMT jabatan, tanggal promosi terakhir, tanggal pelatihan terakhir'],
-            'result' => 'Sistem memiliki bahan untuk menghitung C2, C3, C4, dan C5.',
+            'result' => 'Sistem memiliki profil pegawai yang akan dipilih saat input assessment dan ditampilkan pada laporan TNA.',
             'menu' => 'Data Pegawai',
             'route' => route('employees.index'),
         ],
@@ -31,9 +31,9 @@
             'title' => 'Input Penilaian Kompetensi',
             'short' => 'Nilai kemampuan kerja',
             'icon' => 'fa-clipboard-check',
-            'plain' => 'Atasan atau pengelola SDM memberikan nilai capaian kinerja berbasis kompetensi dengan skala 1 sampai 5.',
-            'prepare' => ['Pilih pegawai', 'Isi nilai setiap kriteria', 'Tambahkan catatan bila ada hal penting'],
-            'result' => 'Sistem memiliki nilai C1 sebagai ukuran capaian kinerja berbasis kompetensi.',
+            'plain' => 'Petugas mengisi skor manual untuk semua kriteria C1 sampai C5 sesuai skala nilai masing-masing.',
+            'prepare' => ['Pilih pegawai', 'Isi C1 nilai capaian kinerja', 'Isi C2 riwayat pelatihan, C3 masa jabatan, C4 promosi, dan C5 usia sesuai skala', 'Tambahkan catatan bila ada hal penting'],
+            'result' => 'Sistem menyimpan assessment lengkap dengan 5 kriteria untuk bahan perhitungan SAW.',
             'menu' => 'Penilaian',
             'route' => route('assessments.index'),
         ],
@@ -42,7 +42,7 @@
             'short' => 'Hitung prioritas',
             'icon' => 'fa-calculator',
             'plain' => 'Sistem mengolah data dengan metode Simple Additive Weighting berdasarkan rumpun jabatan, jenis pelatihan, dan periode semester yang dipilih.',
-            'prepare' => ['C1 dari penilaian kompetensi', 'C2 dari lama tidak mengikuti pelatihan', 'C3 dari masa jabatan', 'C4 dari riwayat promosi', 'C5 dari usia pegawai', 'Rumpun jabatan dan periode semester analisis'],
+            'prepare' => ['Assessment lengkap C1 sampai C5', 'Skala nilai sesuai atribut benefit atau cost', 'Rumpun jabatan dan periode semester analisis'],
             'result' => 'Muncul daftar pegawai, jenis pelatihan prioritas, status kelayakan, dan hasil tersimpan per periode.',
             'menu' => 'Kebutuhan Pelatihan',
             'route' => route('training-needs.index'),
@@ -70,25 +70,24 @@
     ];
 
     $criteria = [
-        ['code' => 'C1', 'name' => 'Capaian Kinerja Berbasis Kompetensi', 'simple' => 'Semakin rendah nilai kompetensi, semakin besar kebutuhan pelatihan.', 'type' => 'Cost', 'weight' => '33,3%', 'source' => 'Penilaian atasan langsung'],
-        ['code' => 'C2', 'name' => 'Riwayat Pelatihan', 'simple' => 'Semakin lama tidak ikut pelatihan, semakin tinggi prioritas.', 'type' => 'Benefit', 'weight' => '26,7%', 'source' => 'Tanggal pelatihan terakhir'],
-        ['code' => 'C3', 'name' => 'Masa Jabatan Saat Ini', 'simple' => 'Semakin lama di jabatan yang sama, semakin perlu penyegaran.', 'type' => 'Benefit', 'weight' => '20,0%', 'source' => 'TMT jabatan'],
-        ['code' => 'C4', 'name' => 'Riwayat Promosi', 'simple' => 'Pegawai yang baru promosi perlu penyesuaian kompetensi.', 'type' => 'Benefit', 'weight' => '13,3%', 'source' => 'Tanggal promosi terakhir'],
-        ['code' => 'C5', 'name' => 'Usia', 'simple' => 'Dipakai sebagai faktor pendukung perencanaan pengembangan.', 'type' => 'Cost', 'weight' => '6,7%', 'source' => 'Tanggal lahir'],
+        ['code' => 'C1', 'name' => 'Capaian Kinerja Berbasis Kompetensi', 'simple' => 'Nilai rendah menjadi skor prioritas lebih tinggi karena atribut cost.', 'type' => 'Cost', 'weight' => '33,3%', 'source' => 'Input manual assessment'],
+        ['code' => 'C2', 'name' => 'Riwayat Pelatihan', 'simple' => 'Semakin lama tidak ikut pelatihan, semakin tinggi prioritas.', 'type' => 'Benefit', 'weight' => '26,7%', 'source' => 'Input manual assessment'],
+        ['code' => 'C3', 'name' => 'Masa Jabatan Saat Ini', 'simple' => 'Semakin lama di jabatan yang sama, semakin perlu penyegaran.', 'type' => 'Benefit', 'weight' => '20,0%', 'source' => 'Input manual assessment'],
+        ['code' => 'C4', 'name' => 'Riwayat Promosi', 'simple' => 'Pegawai yang baru promosi perlu penyesuaian kompetensi.', 'type' => 'Benefit', 'weight' => '13,3%', 'source' => 'Input manual assessment'],
+        ['code' => 'C5', 'name' => 'Usia', 'simple' => 'Usia digunakan sebagai faktor pendukung prioritas sesuai skala cost.', 'type' => 'Cost', 'weight' => '6,7%', 'source' => 'Input manual assessment'],
     ];
 
     $ipoRows = [
-        ['input' => 'Data pegawai, jabatan, unit kerja, tanggal lahir, TMT jabatan', 'process' => 'Validasi profil dan pemetaan rumpun jabatan', 'output' => 'Profil pegawai siap dianalisis'],
-        ['input' => 'Riwayat pelatihan, riwayat promosi, masa jabatan', 'process' => 'Konversi otomatis menjadi nilai C2, C3, dan C4', 'output' => 'Skor kebutuhan pengembangan karier'],
-        ['input' => 'Nilai SKP/IKU/KPI dan indikator kompetensi', 'process' => 'Konversi nilai kinerja berbasis kompetensi menjadi C1', 'output' => 'Skor capaian kinerja pegawai'],
-        ['input' => 'Kriteria SAW dan bobot preferensi', 'process' => 'Normalisasi benefit/cost dan perhitungan V', 'output' => 'Ranking prioritas, rekomendasi pelatihan, dan status kelayakan'],
+        ['input' => 'Data pegawai, jabatan, unit kerja, dan riwayat pendukung', 'process' => 'Validasi profil dan pemetaan rumpun jabatan', 'output' => 'Profil pegawai siap dipilih pada assessment'],
+        ['input' => 'Skor manual C1 sampai C5 pada form assessment', 'process' => 'Penyimpanan assessment lengkap 5 kriteria', 'output' => 'Matriks keputusan X siap dihitung'],
+        ['input' => 'Atribut benefit/cost dan bobot preferensi', 'process' => 'Normalisasi benefit/cost dan perhitungan V', 'output' => 'Ranking prioritas, rekomendasi pelatihan, dan status kelayakan'],
     ];
 
     $systemFlow = [
         'Login pengguna',
         'Buka Data Pegawai',
         'Lengkapi riwayat jabatan dan pelatihan',
-        'Input penilaian kinerja',
+        'Input skor manual C1-C5',
         'Pilih rumpun, jenis pelatihan, dan periode',
         'Ambil kriteria dan bobot SAW',
         'Normalisasi nilai benefit/cost',
@@ -110,7 +109,7 @@
         ['menu' => 'Manajemen Pengguna', 'plain' => 'Akun admin, petugas kepegawaian, pimpinan/ketua, role RBAC, status aktif, dan hak akses modul.', 'route' => route('users-management'), 'icon' => 'fa-user-shield'],
         ['menu' => 'Data Pegawai', 'plain' => 'Profil NIP/NIK, jabatan, unit kerja, riwayat jabatan, pendidikan, pelatihan, dan dokumen pendukung.', 'route' => route('employees.index'), 'icon' => 'fa-users'],
         ['menu' => 'Jabatan & Standar Kompetensi', 'plain' => 'Master jabatan, kompetensi inti/manajerial/teknis/sosial kultural, level 1-5, dan bobot.', 'route' => route('positions-competencies'), 'icon' => 'fa-sitemap'],
-        ['menu' => 'Penilaian Kinerja', 'plain' => 'Input nilai SKP, IKU, KPI, indikator per rumpun, dan pembobotan kinerja terhadap TNA.', 'route' => route('performance'), 'icon' => 'fa-clipboard-check'],
+        ['menu' => 'Penilaian Kinerja', 'plain' => 'Input skor manual C1 sampai C5 sesuai skala nilai masing-masing kriteria sebagai bahan SAW.', 'route' => route('performance'), 'icon' => 'fa-clipboard-check'],
         ['menu' => 'Analisis TNA', 'plain' => 'Filter rumpun jabatan, jenis pelatihan, periode semester, proses SAW, pagination hasil, dan status kelayakan Layak/Cadangan.', 'route' => route('training-needs.index'), 'icon' => 'fa-magnifying-glass-chart'],
         ['menu' => 'Rekomendasi Pelatihan', 'plain' => 'Jenis pelatihan, metode klasikal/e-learning/coaching, target peserta, estimasi waktu, urgensi, dan mapping gap.', 'route' => route('training-recommendations'), 'icon' => 'fa-graduation-cap'],
         ['menu' => 'Perencanaan Pelatihan', 'plain' => 'Rencana tahunan, jadwal kegiatan, peserta, estimasi anggaran, dan approval workflow pimpinan.', 'route' => route('training-plans'), 'icon' => 'fa-calendar-check'],
@@ -128,7 +127,7 @@
         'Riwayat Pelatihan Pegawai',
         'Indikator Kinerja per Rumpun',
         'Periode Penilaian',
-        'Penilaian Capaian Kinerja',
+        'Penilaian Manual C1-C5',
         'Master Kriteria SAW',
         'Bobot Kriteria',
         'Perhitungan SAW',
@@ -139,7 +138,7 @@
     $checklist = [
         'Semua pegawai sudah memiliki jabatan dan unit kerja.',
         'Tanggal lahir, TMT jabatan, promosi terakhir, dan pelatihan terakhir sudah diisi bila datanya ada.',
-        'Penilaian kompetensi terbaru sudah dibuat untuk pegawai yang akan dianalisis.',
+        'Assessment terbaru sudah berisi 5 kriteria C1 sampai C5 untuk pegawai yang akan dianalisis.',
         'Rumpun jabatan, jenis pelatihan, dan periode semester sudah dipilih sebelum menjalankan SAW.',
         'Analisis SAW sudah dijalankan ulang untuk periode yang sesuai setelah ada perubahan data.',
         'Status kelayakan sudah dicek: nilai SAW di atas 0.9000 menjadi Layak, selain itu Cadangan.',
@@ -158,7 +157,7 @@
             'role' => 'Petugas Kepegawaian',
             'focus' => 'Menginput dan memelihara data operasional TNA.',
             'permissions' => ['Data pegawai', 'Riwayat pelatihan', 'Penilaian', 'Jalankan SAW', 'Kelola rekomendasi', 'Laporan'],
-            'note' => 'Aktor utama untuk input riwayat pelatihan, assessment, dan menjalankan analisis.',
+            'note' => 'Aktor utama untuk input riwayat pelatihan, assessment C1-C5, dan menjalankan analisis.',
             'icon' => 'fa-users-gear',
         ],
         [
@@ -222,7 +221,7 @@
         <div class="explain-card">
             <i class="fas fa-database"></i>
             <h6>Data Masuk</h6>
-            <p>Profil pegawai, riwayat pelatihan, masa jabatan, promosi, usia, dan nilai kompetensi.</p>
+            <p>Profil pegawai dan assessment manual C1 sampai C5 sesuai skala nilai masing-masing kriteria.</p>
         </div>
         <div class="explain-card">
             <i class="fas fa-scale-balanced"></i>
@@ -320,19 +319,19 @@
         </div>
         <div class="card-body">
             <p class="section-subtitle mb-3">
-                Alur ini menunjukkan bagaimana sistem mengubah data pegawai menjadi ranking kebutuhan pelatihan. Pengguna cukup melengkapi data dan menjalankan analisis, sedangkan normalisasi serta perangkingan dihitung otomatis oleh aplikasi.
+                Alur ini menunjukkan bagaimana sistem mengubah assessment manual C1 sampai C5 menjadi ranking kebutuhan pelatihan. Pengguna mengisi skor tiap kriteria, sedangkan normalisasi serta perangkingan dihitung otomatis oleh aplikasi.
             </p>
 
             <div class="saw-process-grid mb-4">
                 <div class="saw-process-card">
                     <span>1</span>
                     <h6>Input Data</h6>
-                    <p>Profil pegawai, jabatan, unit kerja, riwayat pelatihan, riwayat promosi, usia, dan nilai kompetensi.</p>
+                    <p>Profil pegawai dan skor manual C1 sampai C5 pada form assessment.</p>
                 </div>
                 <div class="saw-process-card">
                     <span>2</span>
                     <h6>Matriks Keputusan X</h6>
-                    <p>Sistem menyusun skor C1 sampai C5 untuk setiap pegawai sebagai alternatif yang akan dibandingkan.</p>
+                    <p>Sistem memakai skor assessment C1 sampai C5 untuk setiap pegawai sebagai alternatif yang akan dibandingkan.</p>
                 </div>
                 <div class="saw-process-card">
                     <span>3</span>
