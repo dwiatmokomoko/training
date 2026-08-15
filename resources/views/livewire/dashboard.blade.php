@@ -1,9 +1,10 @@
 <div class="dashboard-wrapper">
     <section class="analysis-summary-card mb-4">
-        <div class="summary-card-header">
-            <div>
+        <div class="summary-hero">
+            <div class="summary-title-block">
                 <span class="summary-kicker">Dashboard Ringkas Analisis</span>
                 <h4>Hasil Analisis TNA Tahun {{ $analysisSummary['year'] ?? now()->year }}</h4>
+                <p>Ringkasan utama hasil perhitungan SAW untuk membaca kebutuhan pelatihan pegawai secara cepat.</p>
             </div>
             <div class="summary-actions">
                 <button type="button" class="btn btn-outline-primary btn-sm" wire:click="loadData">
@@ -17,40 +18,49 @@
             </div>
         </div>
 
-        <div class="summary-paper">
-            <div class="summary-ascii-title">
-                <span>+------------------------------------------------------------+</span>
-                <strong>|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;HASIL ANALISIS TNA TAHUN {{ $analysisSummary['year'] ?? now()->year }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</strong>
-                <span>+------------------------------------------------------------+</span>
-            </div>
-
-            <div class="summary-metrics">
-                <div class="summary-row">
+        <div class="summary-content-grid">
+            <div class="summary-metric-grid">
+                <div class="summary-metric assessed">
+                    <div class="summary-metric-icon"><i class="fas fa-user-check"></i></div>
                     <span>Pegawai Dinilai</span>
-                    <strong>{{ $analysisSummary['assessed_employees'] ?? 0 }} Orang</strong>
+                    <strong>{{ $analysisSummary['assessed_employees'] ?? 0 }}</strong>
+                    <small>Orang</small>
                 </div>
-                <div class="summary-row">
+                <div class="summary-metric needs">
+                    <div class="summary-metric-icon"><i class="fas fa-graduation-cap"></i></div>
                     <span>Perlu Pelatihan</span>
-                    <strong>{{ $analysisSummary['needs_training'] ?? 0 }} Orang</strong>
+                    <strong>{{ $analysisSummary['needs_training'] ?? 0 }}</strong>
+                    <small>Orang</small>
                 </div>
-                <div class="summary-row">
+                <div class="summary-metric competent">
+                    <div class="summary-metric-icon"><i class="fas fa-circle-check"></i></div>
                     <span>Sudah Kompeten</span>
-                    <strong>{{ $analysisSummary['competent_employees'] ?? 0 }} Orang</strong>
+                    <strong>{{ $analysisSummary['competent_employees'] ?? 0 }}</strong>
+                    <small>Orang</small>
                 </div>
-                <div class="summary-row">
+                <div class="summary-metric average">
+                    <div class="summary-metric-icon"><i class="fas fa-scale-balanced"></i></div>
                     <span>Rata-rata Nilai SAW</span>
                     <strong>{{ number_format((float) ($analysisSummary['average_saw'] ?? 0), 3) }}</strong>
+                    <small>Skor</small>
                 </div>
             </div>
 
-            <div class="summary-training-list">
-                <h6>Pelatihan Paling Dibutuhkan</h6>
+            <div class="summary-training-panel">
+                <div class="summary-training-head">
+                    <div>
+                        <span>Top 5</span>
+                        <h6>Pelatihan Paling Dibutuhkan</h6>
+                    </div>
+                    <i class="fas fa-ranking-star"></i>
+                </div>
                 @if(! empty($analysisSummary['top_trainings']))
-                    <ol>
+                    <ol class="summary-training-rank">
                         @foreach($analysisSummary['top_trainings'] as $training)
                             <li>
-                                <span>{{ $training['name'] }}</span>
-                                <strong>({{ $training['total'] }})</strong>
+                                <span class="rank-number">{{ $loop->iteration }}</span>
+                                <span class="rank-name">{{ $training['name'] }}</span>
+                                <strong>{{ $training['total'] }}</strong>
                             </li>
                         @endforeach
                     </ol>
@@ -510,32 +520,44 @@
             background: #fff;
             border: 1px solid var(--line);
             border-radius: 8px;
-            box-shadow: var(--shadow-sm);
             overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
 
-        .summary-card-header {
+        .summary-hero {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
             gap: 1rem;
-            padding: 1.1rem 1.25rem;
+            padding: 1.35rem 1.45rem;
             border-bottom: 1px solid var(--line);
-            background: #ffffff;
+            background:
+                linear-gradient(135deg, rgba(0, 112, 72, 0.08), rgba(245, 186, 65, 0.12)),
+                #ffffff;
         }
 
         .summary-kicker {
-            display: block;
-            color: var(--text-muted);
-            font-size: 0.88rem;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 0.45rem;
+            color: var(--ma-dark-green);
+            font-size: 0.82rem;
             font-weight: 700;
-            margin-bottom: 0.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0;
         }
 
-        .summary-card-header h4 {
+        .summary-title-block h4 {
             margin: 0;
             color: var(--text-main);
             font-weight: 850;
+        }
+
+        .summary-title-block p {
+            margin: 0.45rem 0 0;
+            color: var(--text-muted);
+            max-width: 680px;
+            line-height: 1.55;
         }
 
         .summary-actions {
@@ -543,84 +565,186 @@
             flex-wrap: wrap;
             gap: 0.65rem;
             justify-content: flex-end;
+            flex: 0 0 auto;
         }
 
-        .summary-paper {
-            max-width: 720px;
-            margin: 1.25rem;
-            padding: 1.5rem;
-            border-radius: 8px;
-            background: #f8faf9;
-            border: 1px solid #e4ebe7;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-            color: #1d2b24;
-        }
-
-        .summary-ascii-title {
+        .summary-content-grid {
             display: grid;
-            gap: 0.15rem;
-            margin-bottom: 1.45rem;
-            color: #1f3129;
-            white-space: nowrap;
-            overflow-x: auto;
-            font-size: 0.95rem;
-            line-height: 1.4;
-        }
-
-        .summary-ascii-title strong {
-            font-weight: 800;
-        }
-
-        .summary-metrics {
-            display: grid;
-            gap: 1.05rem;
-            margin-bottom: 1.6rem;
-        }
-
-        .summary-row {
-            display: grid;
-            grid-template-columns: minmax(180px, 1fr) auto;
+            grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
             gap: 1rem;
-            align-items: baseline;
-            max-width: 440px;
+            padding: 1.25rem;
+            background: #fff;
         }
 
-        .summary-row span::after {
-            content: ':';
-            float: right;
-            color: #607268;
-        }
-
-        .summary-row strong {
-            font-weight: 800;
-            color: #0b3d2b;
-            white-space: nowrap;
-        }
-
-        .summary-training-list h6 {
-            margin: 0 0 1rem;
-            color: #1d2b24;
-            font-weight: 800;
-        }
-
-        .summary-training-list ol {
+        .summary-metric-grid {
             display: grid;
-            gap: 0.9rem;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.85rem;
+        }
+
+        .summary-metric {
+            position: relative;
+            display: grid;
+            align-content: space-between;
+            min-height: 160px;
+            gap: 0.6rem;
+            padding: 1rem;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fbfcfd;
+            overflow: hidden;
+        }
+
+        .summary-metric::before {
+            content: '';
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 4px;
+            background: var(--ma-green);
+        }
+
+        .summary-metric.assessed::before {
+            background: #007048;
+        }
+
+        .summary-metric.needs::before {
+            background: #d9a22f;
+        }
+
+        .summary-metric.competent::before {
+            background: #178b7b;
+        }
+
+        .summary-metric.average::before {
+            background: #4169a8;
+        }
+
+        .summary-metric-icon {
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: var(--ma-light-green);
+            color: var(--ma-dark-green);
+        }
+
+        .summary-metric.needs .summary-metric-icon {
+            background: var(--ma-light-yellow);
+            color: #6f4d00;
+        }
+
+        .summary-metric.average .summary-metric-icon {
+            background: #eef4ff;
+            color: #244f92;
+        }
+
+        .summary-metric span {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .summary-metric strong {
+            color: var(--text-main);
+            font-size: 2rem;
+            font-weight: 850;
+            line-height: 1;
+        }
+
+        .summary-metric small {
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .summary-training-panel {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 1rem;
+            background: #f8faf9;
+        }
+
+        .summary-training-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: flex-start;
+            margin-bottom: 0.9rem;
+        }
+
+        .summary-training-head span {
+            display: inline-flex;
+            margin-bottom: 0.25rem;
+            color: var(--ma-dark-green);
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .summary-training-head h6 {
             margin: 0;
-            padding-left: 1.2rem;
+            color: var(--text-main);
+            font-weight: 850;
         }
 
-        .summary-training-list li {
-            padding-left: 0.25rem;
+        .summary-training-head i {
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: #6f4d00;
+            background: var(--ma-light-yellow);
+            flex: 0 0 auto;
         }
 
-        .summary-training-list li::marker {
+        .summary-training-rank {
+            display: grid;
+            gap: 0.65rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .summary-training-rank li {
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: #fff;
+            border: 1px solid #e6ece9;
+        }
+
+        .rank-number {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: var(--ma-light-green);
+            color: var(--ma-dark-green);
             font-weight: 800;
         }
 
-        .summary-training-list li strong {
-            color: #0b3d2b;
-            font-weight: 800;
+        .rank-name {
+            color: var(--text-main);
+            font-weight: 750;
+            line-height: 1.35;
+        }
+
+        .summary-training-rank strong {
+            min-width: 42px;
+            padding: 0.3rem 0.55rem;
+            border-radius: 999px;
+            background: var(--ma-light-yellow);
+            color: #6f4d00;
+            text-align: center;
+            font-weight: 850;
         }
 
         .summary-empty {
@@ -629,7 +753,6 @@
             border-radius: 8px;
             color: var(--text-muted);
             background: #fff;
-            font-family: inherit;
         }
 
         /* Stats Cards */
@@ -1228,6 +1351,14 @@
 
         /* Responsive Design */
         @media (max-width: 1200px) {
+            .summary-content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-metric-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
             .analysis-intro {
                 flex-direction: column;
                 align-items: flex-start;
@@ -1240,7 +1371,7 @@
         }
 
         @media (max-width: 768px) {
-            .summary-card-header {
+            .summary-hero {
                 align-items: stretch;
                 flex-direction: column;
             }
@@ -1253,18 +1384,16 @@
                 flex: 1 1 160px;
             }
 
-            .summary-paper {
-                margin: 1rem;
+            .summary-content-grid {
                 padding: 1rem;
             }
 
-            .summary-row {
+            .summary-metric-grid {
                 grid-template-columns: 1fr;
-                gap: 0.25rem;
             }
 
-            .summary-row span::after {
-                content: '';
+            .summary-metric {
+                min-height: 140px;
             }
 
             .stats-card {
@@ -1324,6 +1453,19 @@
             
             .stats-card {
                 padding: 20px;
+            }
+
+            .summary-hero {
+                padding: 1rem;
+            }
+
+            .summary-training-rank li {
+                grid-template-columns: 30px minmax(0, 1fr);
+            }
+
+            .summary-training-rank strong {
+                grid-column: 2;
+                justify-self: start;
             }
             
             .analysis-btn {
