@@ -7,12 +7,22 @@
 @section('content')
 @php
     $scoreOptions = [
-        1 => ['range' => '<= 60', 'label' => 'Sangat Kurang'],
-        2 => ['range' => '61-70', 'label' => 'Kurang'],
-        3 => ['range' => '71-80', 'label' => 'Cukup'],
-        4 => ['range' => '81-90', 'label' => 'Baik'],
-        5 => ['range' => '91-100', 'label' => 'Sangat Baik'],
+        ['score' => 1, 'range' => '91-100', 'label' => 'Sangat Baik'],
+        ['score' => 2, 'range' => '81-90', 'label' => 'Baik'],
+        ['score' => 3, 'range' => '71-80', 'label' => 'Cukup'],
+        ['score' => 4, 'range' => '61-70', 'label' => 'Kurang'],
+        ['score' => 5, 'range' => '<= 60', 'label' => 'Sangat Kurang'],
     ];
+
+    $criteriaScales = [
+        'C1' => ['91-100 (Sangat Baik) = 1', '81-90 (Baik) = 2', '71-80 (Cukup) = 3', '61-70 (Kurang) = 4', '<= 60 (Sangat Kurang) = 5'],
+        'C2' => ['Belum pernah atau > 5 tahun = 5', '4-5 tahun = 4', '2-3 tahun = 3', '1 tahun = 2', '< 1 tahun = 1'],
+        'C3' => ['> 8 tahun = 5', '6-8 tahun = 4', '4-5 tahun = 3', '2-3 tahun = 2', '< 2 tahun = 1'],
+        'C4' => ['Baru promosi (< 1 tahun) = 5', 'Promosi 1-3 tahun = 4', 'Promosi 3-5 tahun = 3', 'Promosi > 5 tahun = 2', 'Tidak pernah promosi = 1'],
+        'C5' => ['<= 30 tahun = 5', '31-40 tahun = 4', '41-50 tahun = 3', '51-55 tahun = 2', '> 55 tahun = 1'],
+    ];
+
+    $manualCriteria = $criteria->filter(fn ($criterion) => strtoupper((string) $criterion->code) === 'C1');
 @endphp
 
 <div class="row justify-content-center">
@@ -68,12 +78,12 @@
                             </h6>
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Pilih kategori nilai capaian kinerja. Sistem tetap mengonversi pilihan menjadi skala 1-5 untuk perhitungan SAW.
+                                Pilih kategori nilai capaian kinerja untuk C1. Kriteria C2-C5 dihitung otomatis dari data pegawai.
                             </div>
                         </div>
                     </div>
                     
-                    @foreach($criteria as $criterion)
+                    @foreach($manualCriteria as $criterion)
                     <div class="card mb-3">
                         <div class="card-body">
                             <div class="row align-items-center">
@@ -92,20 +102,21 @@
                                         <span>Kategori</span>
                                     </div>
                                     <div class="score-option-list">
-                                        @foreach($scoreOptions as $i => $option)
+                                        @foreach($scoreOptions as $option)
+                                            @php $score = $option['score']; @endphp
                                             <div class="form-check">
                                                 <input class="form-check-input @error('scores.' . $criterion->id) is-invalid @enderror" 
                                                        type="radio" 
                                                        name="scores[{{ $criterion->id }}]" 
-                                                       id="score_{{ $criterion->id }}_{{ $i }}" 
-                                                       value="{{ $i }}"
-                                                       {{ old('scores.' . $criterion->id) == $i ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="score_{{ $criterion->id }}_{{ $i }}">
+                                                       id="score_{{ $criterion->id }}_{{ $score }}" 
+                                                       value="{{ $score }}"
+                                                       {{ old('scores.' . $criterion->id) == $score ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="score_{{ $criterion->id }}_{{ $score }}">
                                                     <div class="score-option">
                                                         <div class="score-range">{{ $option['range'] }}</div>
                                                         <div class="score-category">
                                                             <span>{{ $option['label'] }}</span>
-                                                            <small>Skor {{ $i }}</small>
+                                                            <small>Skor {{ $score }}</small>
                                                         </div>
                                                     </div>
                                                 </label>
@@ -120,7 +131,58 @@
                         </div>
                     </div>
                     @endforeach
-                    
+
+                    <div class="criteria-reference-card mb-3">
+                        <div class="criteria-reference-head">
+                            <div>
+                                <h6>Referensi Kriteria dan Skala Nilai SAW</h6>
+                                <p>C1 diinput manual pada form ini. C2 sampai C5 dihitung otomatis dari profil, riwayat pelatihan, jabatan, promosi, dan usia pegawai.</p>
+                            </div>
+                            <span class="auto-note">C2-C5 Otomatis</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table align-middle criteria-reference-table">
+                                <thead>
+                                    <tr>
+                                        <th>Kode</th>
+                                        <th>Nama Kriteria</th>
+                                        <th>Atribut</th>
+                                        <th>Bobot</th>
+                                        <th>Skala Nilai</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($criteria as $criterion)
+                                        @php $code = strtoupper((string) $criterion->code); @endphp
+                                        <tr>
+                                            <td class="criteria-code-cell">{{ $criterion->code }}</td>
+                                            <td>
+                                                <strong>{{ $criterion->name }}</strong>
+                                                @if($criterion->description)
+                                                    <small>{{ $criterion->description }}</small>
+                                                @endif
+                                                @if($code !== 'C1')
+                                                    <span class="auto-source-badge">Dihitung otomatis</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <span class="attribute-badge">{{ ucfirst($criterion->type) }}</span>
+                                            </td>
+                                            <td>{{ number_format($criterion->weight, 3) }}</td>
+                                            <td>
+                                                <div class="scale-chip-list">
+                                                    @foreach($criteriaScales[$code] ?? [] as $scale)
+                                                        <span>{{ $scale }}</span>
+                                                    @endforeach
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                     
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="mb-3">
@@ -248,6 +310,117 @@
     color: #ffffff;
 }
 
+.criteria-reference-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.criteria-reference-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--line);
+    background: #f8faf9;
+}
+
+.criteria-reference-head h6 {
+    margin: 0;
+    color: var(--text-main);
+    font-weight: 850;
+}
+
+.criteria-reference-head p {
+    margin: 0.35rem 0 0;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.auto-note,
+.auto-source-badge,
+.attribute-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.auto-note {
+    padding: 0.35rem 0.65rem;
+    background: var(--ma-light-yellow);
+    color: #6f4d00;
+}
+
+.criteria-reference-table {
+    margin: 0;
+}
+
+.criteria-reference-table th {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    background: #ffffff;
+}
+
+.criteria-reference-table td {
+    vertical-align: middle;
+    border-color: var(--line);
+}
+
+.criteria-reference-table td:nth-child(2) strong {
+    display: block;
+    color: var(--text-main);
+    font-weight: 850;
+}
+
+.criteria-reference-table td:nth-child(2) small {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.criteria-code-cell {
+    color: var(--text-main);
+    font-weight: 850;
+}
+
+.auto-source-badge {
+    margin-top: 0.45rem;
+    padding: 0.25rem 0.5rem;
+    background: #edf6f0;
+    color: var(--ma-dark-green);
+}
+
+.attribute-badge {
+    padding: 0.28rem 0.55rem;
+    background: #687481;
+    color: #ffffff;
+}
+
+.scale-chip-list {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 260px;
+}
+
+.scale-chip-list span {
+    display: block;
+    padding: 0.35rem 0.55rem;
+    border-radius: 6px;
+    background: #edf6f0;
+    color: var(--text-main);
+    font-size: 0.88rem;
+    line-height: 1.3;
+}
+
 @media (max-width: 575.98px) {
     .score-option-head {
         display: none;
@@ -260,6 +433,14 @@
     .score-category {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .criteria-reference-head {
+        flex-direction: column;
+    }
+
+    .scale-chip-list {
+        min-width: 220px;
     }
 }
 </style>

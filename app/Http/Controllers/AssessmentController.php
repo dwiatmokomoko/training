@@ -57,6 +57,7 @@ class AssessmentController extends Controller
         ]);
 
         $totalScore = 0;
+        $totalWeight = 0;
         $criteria = Criteria::latestTna()->get();
 
         // Create assessment scores for each criteria
@@ -70,11 +71,12 @@ class AssessmentController extends Controller
                 
                 // Calculate weighted score
                 $totalScore += ($score * $criterion->weight);
+                $totalWeight += (float) $criterion->weight;
             }
         }
 
         // Update total score
-        $assessment->update(['total_score' => $totalScore]);
+        $assessment->update(['total_score' => $totalWeight > 0 ? $totalScore / $totalWeight : 0]);
 
         return redirect()->route('assessments.index')
             ->with('success', 'Penilaian berhasil ditambahkan!');
@@ -118,6 +120,7 @@ class AssessmentController extends Controller
         ]);
 
         $totalScore = 0;
+        $totalWeight = 0;
         $criteria = Criteria::latestTna()->get();
 
         // Update assessment scores for each criteria
@@ -131,11 +134,12 @@ class AssessmentController extends Controller
                 
                 // Calculate weighted score
                 $totalScore += ($score * $criterion->weight);
+                $totalWeight += (float) $criterion->weight;
             }
         }
 
         // Update total score
-        $assessment->update(['total_score' => $totalScore]);
+        $assessment->update(['total_score' => $totalWeight > 0 ? $totalScore / $totalWeight : 0]);
 
         return redirect()->route('assessments.show', $assessment)
             ->with('success', 'Penilaian berhasil diperbarui!');
@@ -193,6 +197,7 @@ class AssessmentController extends Controller
         ]);
 
         $totalScore = 0;
+        $totalWeight = 0;
         $criteria = Criteria::latestTna()->get();
 
         // Create assessment scores for each criteria
@@ -206,11 +211,12 @@ class AssessmentController extends Controller
                 
                 // Calculate weighted score
                 $totalScore += ($score * $criterion->weight);
+                $totalWeight += (float) $criterion->weight;
             }
         }
 
         // Update total score
-        $assessment->update(['total_score' => $totalScore]);
+        $assessment->update(['total_score' => $totalWeight > 0 ? $totalScore / $totalWeight : 0]);
 
         return redirect()->route('assessments.index')
             ->with('success', 'Penilaian bulk berhasil ditambahkan!');
