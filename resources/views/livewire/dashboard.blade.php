@@ -1,4 +1,68 @@
 <div class="dashboard-wrapper">
+    <section class="analysis-summary-card mb-4">
+        <div class="summary-card-header">
+            <div>
+                <span class="summary-kicker">Dashboard Ringkas Analisis</span>
+                <h4>Hasil Analisis TNA Tahun {{ $analysisSummary['year'] ?? now()->year }}</h4>
+            </div>
+            <div class="summary-actions">
+                <button type="button" class="btn btn-outline-primary btn-sm" wire:click="loadData">
+                    <i class="fas fa-rotate me-2"></i>
+                    Refresh
+                </button>
+                <a href="{{ route('training-needs.index') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Lihat Analisis
+                </a>
+            </div>
+        </div>
+
+        <div class="summary-paper">
+            <div class="summary-ascii-title">
+                <span>+------------------------------------------------------------+</span>
+                <strong>|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;HASIL ANALISIS TNA TAHUN {{ $analysisSummary['year'] ?? now()->year }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</strong>
+                <span>+------------------------------------------------------------+</span>
+            </div>
+
+            <div class="summary-metrics">
+                <div class="summary-row">
+                    <span>Pegawai Dinilai</span>
+                    <strong>{{ $analysisSummary['assessed_employees'] ?? 0 }} Orang</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Perlu Pelatihan</span>
+                    <strong>{{ $analysisSummary['needs_training'] ?? 0 }} Orang</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Sudah Kompeten</span>
+                    <strong>{{ $analysisSummary['competent_employees'] ?? 0 }} Orang</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Rata-rata Nilai SAW</span>
+                    <strong>{{ number_format((float) ($analysisSummary['average_saw'] ?? 0), 3) }}</strong>
+                </div>
+            </div>
+
+            <div class="summary-training-list">
+                <h6>Pelatihan Paling Dibutuhkan</h6>
+                @if(! empty($analysisSummary['top_trainings']))
+                    <ol>
+                        @foreach($analysisSummary['top_trainings'] as $training)
+                            <li>
+                                <span>{{ $training['name'] }}</span>
+                                <strong>({{ $training['total'] }})</strong>
+                            </li>
+                        @endforeach
+                    </ol>
+                @else
+                    <div class="summary-empty">
+                        Belum ada hasil analisis TNA untuk tahun ini.
+                    </div>
+                @endif
+            </div>
+        </div>
+    </section>
+
     <!-- Statistics Cards -->
     <div class="row g-4 mb-5">
         <div class="col-xl-3 col-lg-6 col-md-6">
@@ -440,6 +504,132 @@
         /* Modern Dashboard Styles */
         .dashboard-wrapper {
             padding: 0;
+        }
+
+        .analysis-summary-card {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .summary-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1.1rem 1.25rem;
+            border-bottom: 1px solid var(--line);
+            background: #ffffff;
+        }
+
+        .summary-kicker {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .summary-card-header h4 {
+            margin: 0;
+            color: var(--text-main);
+            font-weight: 850;
+        }
+
+        .summary-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            justify-content: flex-end;
+        }
+
+        .summary-paper {
+            max-width: 720px;
+            margin: 1.25rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            background: #f8faf9;
+            border: 1px solid #e4ebe7;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            color: #1d2b24;
+        }
+
+        .summary-ascii-title {
+            display: grid;
+            gap: 0.15rem;
+            margin-bottom: 1.45rem;
+            color: #1f3129;
+            white-space: nowrap;
+            overflow-x: auto;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .summary-ascii-title strong {
+            font-weight: 800;
+        }
+
+        .summary-metrics {
+            display: grid;
+            gap: 1.05rem;
+            margin-bottom: 1.6rem;
+        }
+
+        .summary-row {
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) auto;
+            gap: 1rem;
+            align-items: baseline;
+            max-width: 440px;
+        }
+
+        .summary-row span::after {
+            content: ':';
+            float: right;
+            color: #607268;
+        }
+
+        .summary-row strong {
+            font-weight: 800;
+            color: #0b3d2b;
+            white-space: nowrap;
+        }
+
+        .summary-training-list h6 {
+            margin: 0 0 1rem;
+            color: #1d2b24;
+            font-weight: 800;
+        }
+
+        .summary-training-list ol {
+            display: grid;
+            gap: 0.9rem;
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        .summary-training-list li {
+            padding-left: 0.25rem;
+        }
+
+        .summary-training-list li::marker {
+            font-weight: 800;
+        }
+
+        .summary-training-list li strong {
+            color: #0b3d2b;
+            font-weight: 800;
+        }
+
+        .summary-empty {
+            padding: 0.9rem 1rem;
+            border: 1px dashed #cbd8d0;
+            border-radius: 8px;
+            color: var(--text-muted);
+            background: #fff;
+            font-family: inherit;
         }
 
         /* Stats Cards */
@@ -1050,6 +1240,33 @@
         }
 
         @media (max-width: 768px) {
+            .summary-card-header {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .summary-actions {
+                justify-content: stretch;
+            }
+
+            .summary-actions .btn {
+                flex: 1 1 160px;
+            }
+
+            .summary-paper {
+                margin: 1rem;
+                padding: 1rem;
+            }
+
+            .summary-row {
+                grid-template-columns: 1fr;
+                gap: 0.25rem;
+            }
+
+            .summary-row span::after {
+                content: '';
+            }
+
             .stats-card {
                 flex-direction: column;
                 text-align: center;

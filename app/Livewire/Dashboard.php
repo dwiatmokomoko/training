@@ -17,6 +17,7 @@ class Dashboard extends Component
     public $criteriaWeights = [];
     public $competencyLevels = [];
     public $notifications = [];
+    public $analysisSummary = [];
     public $isAnalyzing = false;
 
     protected $listeners = ['refreshDashboard' => 'loadData'];
@@ -28,7 +29,51 @@ class Dashboard extends Component
 
     public function loadData()
     {
+        $currentYear = (int) now()->year;
         $assessedEmployeeIds = Assessment::query()->distinct()->pluck('employee_id');
+        $yearAssessedEmployeeIds = Assessment::query()
+            ->whereYear('assessment_date', $currentYear)
+            ->distinct()
+            ->pluck('employee_id');
+
+        $trainingNeedYearQuery = TrainingNeed::query()
+            ->where(function ($query) use ($currentYear) {
+                $query->where('period_year', $currentYear)
+                    ->orWhere(function ($fallbackQuery) use ($currentYear) {
+                        $fallbackQuery->whereNull('period_year')
+                            ->whereYear('recommended_date', $currentYear);
+                    });
+            });
+
+        $needsTraining = (clone $trainingNeedYearQuery)
+            ->distinct('employee_id')
+            ->count('employee_id');
+
+        $topTrainingTypes = (clone $trainingNeedYearQuery)
+            ->select('training_type')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('training_type')
+            ->orderByDesc('total')
+            ->orderBy('training_type')
+            ->limit(5)
+            ->get()
+            ->map(fn ($item) => [
+                'name' => $item->training_type,
+                'total' => (int) $item->total,
+            ])
+            ->values()
+            ->toArray();
+
+        $assessedEmployees = $yearAssessedEmployeeIds->count();
+
+        $this->analysisSummary = [
+            'year' => $currentYear,
+            'assessed_employees' => $assessedEmployees,
+            'needs_training' => $needsTraining,
+            'competent_employees' => max($assessedEmployees - $needsTraining, 0),
+            'average_saw' => (float) ((clone $trainingNeedYearQuery)->avg('saw_score') ?? 0),
+            'top_trainings' => $topTrainingTypes,
+        ];
 
         $this->stats = [
             'total_employees' => Employee::count(),
